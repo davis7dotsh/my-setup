@@ -24,7 +24,8 @@
 	padding: 0;
 }
 
-html, body {
+html,
+body {
 	background-color: var(--color-bg-void);
 	color: var(--color-text-primary);
 	font-family: var(--font-display);
@@ -37,6 +38,34 @@ html, body {
 	padding: 1rem;
 	max-width: 1600px;
 	margin: 0 auto;
+}
+
+/* Top navigation */
+.top-nav {
+	display: flex;
+	gap: 0.75rem;
+	align-items: center;
+	padding: 0.75rem 1rem;
+	margin: 0 auto 1rem;
+	max-width: 1600px;
+	background: var(--color-bg-card);
+	border: 1px solid var(--color-grid-line-bright);
+}
+
+.top-nav-link {
+	font-size: 0.75rem;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	color: var(--color-text-tertiary);
+	text-decoration: none;
+	padding: 0.35rem 0.5rem;
+	border: 1px solid transparent;
+}
+
+.top-nav-link:hover {
+	color: var(--color-text-primary);
+	border-color: var(--color-grid-line-bright);
+	background: var(--color-bg-hover);
 }
 
 @media (min-width: 640px) {
@@ -419,7 +448,12 @@ tbody tr:hover {
 .skeleton-line {
 	height: 1.5rem;
 	border-radius: 0.25rem;
-	background: linear-gradient(90deg, var(--color-bg-hover) 25%, var(--color-bg-elevated) 50%, var(--color-bg-hover) 75%);
+	background: linear-gradient(
+		90deg,
+		var(--color-bg-hover) 25%,
+		var(--color-bg-elevated) 50%,
+		var(--color-bg-hover) 75%
+	);
 	background-size: 200% 100%;
 	animation: shimmer 1.5s infinite;
 }
@@ -429,8 +463,12 @@ tbody tr:hover {
 }
 
 @keyframes shimmer {
-	0% { background-position: 200% 0; }
-	100% { background-position: -200% 0; }
+	0% {
+		background-position: 200% 0;
+	}
+	100% {
+		background-position: -200% 0;
+	}
 }
 
 .pulse {
@@ -438,8 +476,13 @@ tbody tr:hover {
 }
 
 @keyframes pulse {
-	0%, 100% { opacity: 1; }
-	50% { opacity: 0.5; }
+	0%,
+	100% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 0.5;
+	}
 }
 
 /* Error state */

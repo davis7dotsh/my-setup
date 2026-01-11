@@ -6,7 +6,8 @@ import {
 	index,
 	uniqueIndex,
 	serial,
-	timestamp
+	timestamp,
+	jsonb
 } from 'drizzle-orm/pg-core';
 
 // Main requests table - one row per LLM call
@@ -85,6 +86,90 @@ export const dailySummary = pgTable(
 	]
 );
 
+// Turns - one row per user prompt -> assistant response
+export const turns = pgTable(
+	'turns',
+	{
+		id: serial('id').primaryKey(),
+		sessionId: text('session_id').notNull(),
+		userMessageId: text('user_message_id'),
+		assistantMessageId: text('assistant_message_id'),
+
+		// Context
+		agent: text('agent'),
+		providerId: text('provider_id'),
+		modelId: text('model_id'),
+
+		// Content
+		prompt: text('prompt').notNull(),
+		assistantText: text('assistant_text'),
+
+		// Token counts (copied from assistant request)
+		tokensInput: integer('tokens_input').notNull().default(0),
+		tokensOutput: integer('tokens_output').notNull().default(0),
+		tokensReasoning: integer('tokens_reasoning').notNull().default(0),
+		tokensCacheRead: integer('tokens_cache_read').notNull().default(0),
+		tokensCacheWrite: integer('tokens_cache_write').notNull().default(0),
+
+		// Metrics
+		costUsd: doublePrecision('cost_usd').notNull().default(0),
+		durationMs: integer('duration_ms'),
+		finishReason: text('finish_reason'),
+
+		// Timestamps
+		createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
+		completedAt: timestamp('completed_at', { withTimezone: true })
+	},
+	(table) => [
+		index('idx_turns_session').on(table.sessionId),
+		uniqueIndex('idx_turns_user_message').on(table.userMessageId),
+		uniqueIndex('idx_turns_assistant_message').on(table.assistantMessageId)
+	]
+);
+
+// Tool calls captured during a turn
+export const toolCalls = pgTable(
+	'tool_calls',
+	{
+		id: serial('id').primaryKey(),
+		sessionId: text('session_id').notNull(),
+		turnId: integer('turn_id').references(() => turns.id, { onDelete: 'set null' }),
+		callId: text('call_id').notNull(),
+		tool: text('tool').notNull(),
+
+		args: jsonb('args'),
+		title: text('title'),
+		output: text('output'),
+		metadata: jsonb('metadata'),
+
+		startedAt: timestamp('started_at', { withTimezone: true }).notNull(),
+		completedAt: timestamp('completed_at', { withTimezone: true })
+	},
+	(table) => [
+		index('idx_tool_calls_session').on(table.sessionId),
+		index('idx_tool_calls_turn').on(table.turnId),
+		uniqueIndex('idx_tool_calls_call_id').on(table.callId)
+	]
+);
+
+// Assistant text parts (final text output per message/part)
+export const assistantTextParts = pgTable(
+	'assistant_text_parts',
+	{
+		id: serial('id').primaryKey(),
+		sessionId: text('session_id').notNull(),
+		messageId: text('message_id').notNull(),
+		partId: text('part_id').notNull(),
+		text: text('text').notNull(),
+		createdAt: timestamp('created_at', { withTimezone: true }).notNull()
+	},
+	(table) => [
+		index('idx_assistant_text_parts_session').on(table.sessionId),
+		index('idx_assistant_text_parts_message').on(table.messageId),
+		uniqueIndex('idx_assistant_text_parts_unique').on(table.messageId, table.partId)
+	]
+);
+
 // Type exports for querying
 export type Request = typeof requests.$inferSelect;
 export type NewRequest = typeof requests.$inferInsert;
@@ -92,3 +177,9 @@ export type Session = typeof sessions.$inferSelect;
 export type NewSession = typeof sessions.$inferInsert;
 export type DailySummary = typeof dailySummary.$inferSelect;
 export type NewDailySummary = typeof dailySummary.$inferInsert;
+export type Turn = typeof turns.$inferSelect;
+export type NewTurn = typeof turns.$inferInsert;
+export type ToolCall = typeof toolCalls.$inferSelect;
+export type NewToolCall = typeof toolCalls.$inferInsert;
+export type AssistantTextPart = typeof assistantTextParts.$inferSelect;
+export type NewAssistantTextPart = typeof assistantTextParts.$inferInsert;

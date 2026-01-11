@@ -6,6 +6,8 @@ interface Config {
   apiKey: string;
 }
 
+const MAX_TOOL_OUTPUT_CHARS = 20_000;
+
 // Track message start times for duration calculation
 const messageStartTimes = new Map<string, number>();
 
@@ -25,6 +27,20 @@ async function loadConfig(): Promise<Config | null> {
   } catch {
     return null;
   }
+}
+
+function truncate(text: string, max: number): string {
+  if (text.length <= max) return text;
+  return text.slice(0, max) + `\n… (truncated, ${text.length} chars total)`;
+}
+
+function extractPrompt(parts: any[]): string {
+  const textParts = parts
+    .filter((p) => p && p.type === "text" && !p.ignored)
+    .map((p) => String(p.text ?? ""))
+    .filter(Boolean);
+
+  return textParts.join("\n").trim();
 }
 
 async function sendEvent(config: Config, event: object): Promise<void> {
@@ -53,6 +69,7 @@ export const TokenTrackerPlugin: Plugin = async ({ directory }) => {
   }
 
   return {
+    // Raw event stream
     event: async ({ event }) => {
       try {
         // Track when assistant messages start (for duration calculation)
@@ -84,8 +101,7 @@ export const TokenTrackerPlugin: Plugin = async ({ directory }) => {
             return;
           }
 
-          const now = new Date();
-          const timestamp = now.toISOString();
+          const timestamp = new Date().toISOString();
 
           // Calculate duration if we have start time
           const startTime = messageStartTimes.get(message.id);
@@ -96,6 +112,7 @@ export const TokenTrackerPlugin: Plugin = async ({ directory }) => {
 
           // Send event to API
           await sendEvent(config, {
+            type: "request",
             messageId: message.id,
             sessionId: message.sessionID,
             providerId: message.providerID,
@@ -126,8 +143,78 @@ export const TokenTrackerPlugin: Plugin = async ({ directory }) => {
             output: message.tokens.output,
           });
         }
-      } catch (_err) {
+      } catch {
         // Silently fail - don't break opencode
+      }
+    },
+
+    // User prompt capture
+    "chat.message": async (input, output) => {
+      try {
+        const prompt = extractPrompt(output.parts);
+        if (!prompt) return;
+
+        await sendEvent(config, {
+          type: "prompt",
+          sessionId: input.sessionID,
+          messageId: output.message.id,
+          prompt,
+          agent: output.message.agent,
+          providerId: output.message.model.providerID,
+          modelId: output.message.model.modelID,
+          createdAt: new Date(output.message.time.created).toISOString(),
+        });
+      } catch {
+        // ignore
+      }
+    },
+
+    // Tool call capture
+    "tool.execute.before": async (input, output) => {
+      try {
+        await sendEvent(config, {
+          type: "tool.before",
+          sessionId: input.sessionID,
+          callId: input.callID,
+          tool: input.tool,
+          args: output.args,
+          createdAt: new Date().toISOString(),
+        });
+      } catch {
+        // ignore
+      }
+    },
+
+    "tool.execute.after": async (input, output) => {
+      try {
+        await sendEvent(config, {
+          type: "tool.after",
+          sessionId: input.sessionID,
+          callId: input.callID,
+          tool: input.tool,
+          title: output.title,
+          output: truncate(String(output.output ?? ""), MAX_TOOL_OUTPUT_CHARS),
+          metadata: output.metadata,
+          createdAt: new Date().toISOString(),
+        });
+      } catch {
+        // ignore
+      }
+    },
+
+    // Final assistant text output
+    "experimental.text.complete": async (input, output) => {
+      try {
+        await sendEvent(config, {
+          type: "assistant.text",
+          sessionId: input.sessionID,
+          messageId: input.messageID,
+          partId: input.partID,
+          text: output.text,
+          createdAt: new Date().toISOString(),
+        });
+      } catch {
+        // ignore
       }
     },
   };

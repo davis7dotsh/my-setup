@@ -66,7 +66,7 @@
 			.append('stop')
 			.attr('offset', '0%')
 			.attr('stop-color', 'var(--color-accent)')
-			.attr('stop-opacity', 0.40);
+			.attr('stop-opacity', 0.4);
 		inputGrad
 			.append('stop')
 			.attr('offset', '100%')

@@ -235,7 +235,9 @@
 		costOverTime?.map((d) => ({ date: d.date, value: d.cost_usd })) ?? []
 	);
 	let modelCostData = $derived(
-		costByModel?.slice(0, 8).map((d) => ({ label: getModelShortName(d.model_id), value: d.cost_usd })) ?? []
+		costByModel
+			?.slice(0, 8)
+			.map((d) => ({ label: getModelShortName(d.model_id), value: d.cost_usd })) ?? []
 	);
 	let tokensTimeData = $derived(
 		costOverTime?.map((d) => ({
@@ -275,9 +277,7 @@
 			<h1 class="header-title">
 				OpenCode <span class="accent">Observatory</span>
 			</h1>
-			<div class="header-subtitle">
-				A tiny instrument panel for OpenCode's LLM usage.
-			</div>
+			<div class="header-subtitle">A tiny instrument panel for OpenCode's LLM usage.</div>
 		</div>
 
 		<div class="header-right">
@@ -423,7 +423,10 @@
 		{#if costByModelLoading || modelPerformanceLoading}
 			{@render loadingState()}
 		{:else if costByModelError || modelPerformanceError}
-			{@render errorState(costByModelError || modelPerformanceError, () => { fetchCostByModel(); fetchModelPerformance(); })}
+			{@render errorState(costByModelError || modelPerformanceError, () => {
+				fetchCostByModel();
+				fetchModelPerformance();
+			})}
 		{:else if costByModel && costByModel.length > 0}
 			<div class="table-container">
 				<table>
