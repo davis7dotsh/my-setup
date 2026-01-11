@@ -146,6 +146,7 @@ export const POST: RequestHandler = async ({ request }) => {
 				const timestamp = coerceDate(event.createdAt);
 				const title = event.prompt.trim().slice(0, 120) || null;
 
+				const timestampStr = timestamp.toISOString();
 				await db
 					.insert(sessions)
 					.values({
@@ -157,8 +158,8 @@ export const POST: RequestHandler = async ({ request }) => {
 					.onConflictDoUpdate({
 						target: sessions.sessionId,
 						set: {
-							lastRequestAt: sql`GREATEST(${sessions.lastRequestAt}, ${timestamp})`,
-							firstRequestAt: sql`COALESCE(${sessions.firstRequestAt}, ${timestamp})`,
+							lastRequestAt: sql`GREATEST(${sessions.lastRequestAt}, ${timestampStr}::timestamptz)`,
+							firstRequestAt: sql`COALESCE(${sessions.firstRequestAt}, ${timestampStr}::timestamptz)`,
 							title: sql`COALESCE(${sessions.title}, ${title})`
 						}
 					});
