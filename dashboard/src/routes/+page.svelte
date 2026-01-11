@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import AreaChart from '$lib/components/AreaChart.svelte';
 	import BarChart from '$lib/components/BarChart.svelte';
 	import DonutChart from '$lib/components/DonutChart.svelte';
@@ -14,24 +15,189 @@
 		getRecentRequests
 	} from '$lib/remote/stats.remote';
 
+	// Types for our data
+	type Totals = {
+		total_requests: number;
+		total_input: number;
+		total_output: number;
+		total_reasoning: number;
+		total_cache_read: number;
+		total_cache_write: number;
+		total_cost: number;
+	};
+	type CostByModelItem = {
+		model_id: string;
+		provider_id: string;
+		request_count: number;
+		tokens_input: number;
+		tokens_output: number;
+		cost_usd: number;
+	};
+	type CostOverTimeItem = {
+		date: string;
+		request_count: number;
+		tokens_input: number;
+		tokens_output: number;
+		cost_usd: number;
+	};
+	type TokensData = {
+		hourly: { hour: number; tokens_input: number; tokens_output: number }[];
+		daily: { date: string; tokens_input: number; tokens_output: number }[];
+	};
+	type AgentBreakdownItem = {
+		agent: string;
+		request_count: number;
+		tokens_input: number;
+		tokens_output: number;
+		cost_usd: number;
+	};
+	type ModelPerformanceItem = {
+		model_id: string;
+		avg_duration_ms: number;
+		request_count: number;
+	};
+	type RecentRequestItem = {
+		id: number;
+		model_id: string;
+		tokens_input: number;
+		tokens_output: number;
+		cost_usd: number;
+		created_at: string;
+	};
+
+	// State for all data
+	let totals = $state<Totals | null>(null);
+	let costByModel = $state<CostByModelItem[] | null>(null);
+	let costOverTime = $state<CostOverTimeItem[] | null>(null);
+	let tokensData = $state<TokensData | null>(null);
+	let agentBreakdown = $state<AgentBreakdownItem[] | null>(null);
+	let modelPerformance = $state<ModelPerformanceItem[] | null>(null);
+	let recentRequests = $state<RecentRequestItem[] | null>(null);
+
+	// Loading states
+	let totalsLoading = $state(true);
+	let costByModelLoading = $state(true);
+	let costOverTimeLoading = $state(true);
+	let tokensDataLoading = $state(true);
+	let agentBreakdownLoading = $state(true);
+	let modelPerformanceLoading = $state(true);
+	let recentRequestsLoading = $state(true);
+
+	// Error states
+	let totalsError = $state<Error | null>(null);
+	let costByModelError = $state<Error | null>(null);
+	let costOverTimeError = $state<Error | null>(null);
+	let tokensDataError = $state<Error | null>(null);
+	let agentBreakdownError = $state<Error | null>(null);
+	let modelPerformanceError = $state<Error | null>(null);
+	let recentRequestsError = $state<Error | null>(null);
+
 	let currentTime = $state(new Date().toLocaleTimeString());
 
-	$effect(() => {
+	// Fetch functions
+	async function fetchTotals() {
+		totalsLoading = true;
+		totalsError = null;
+		try {
+			totals = await getTotals();
+		} catch (e) {
+			totalsError = e instanceof Error ? e : new Error('Failed to load');
+		} finally {
+			totalsLoading = false;
+		}
+	}
+
+	async function fetchCostByModel() {
+		costByModelLoading = true;
+		costByModelError = null;
+		try {
+			costByModel = await getCostByModel();
+		} catch (e) {
+			costByModelError = e instanceof Error ? e : new Error('Failed to load');
+		} finally {
+			costByModelLoading = false;
+		}
+	}
+
+	async function fetchCostOverTime() {
+		costOverTimeLoading = true;
+		costOverTimeError = null;
+		try {
+			costOverTime = await getCostOverTime();
+		} catch (e) {
+			costOverTimeError = e instanceof Error ? e : new Error('Failed to load');
+		} finally {
+			costOverTimeLoading = false;
+		}
+	}
+
+	async function fetchTokensData() {
+		tokensDataLoading = true;
+		tokensDataError = null;
+		try {
+			tokensData = await getTokensData();
+		} catch (e) {
+			tokensDataError = e instanceof Error ? e : new Error('Failed to load');
+		} finally {
+			tokensDataLoading = false;
+		}
+	}
+
+	async function fetchAgentBreakdown() {
+		agentBreakdownLoading = true;
+		agentBreakdownError = null;
+		try {
+			agentBreakdown = await getAgentBreakdown();
+		} catch (e) {
+			agentBreakdownError = e instanceof Error ? e : new Error('Failed to load');
+		} finally {
+			agentBreakdownLoading = false;
+		}
+	}
+
+	async function fetchModelPerformance() {
+		modelPerformanceLoading = true;
+		modelPerformanceError = null;
+		try {
+			modelPerformance = await getModelPerformance();
+		} catch (e) {
+			modelPerformanceError = e instanceof Error ? e : new Error('Failed to load');
+		} finally {
+			modelPerformanceLoading = false;
+		}
+	}
+
+	async function fetchRecentRequests() {
+		recentRequestsLoading = true;
+		recentRequestsError = null;
+		try {
+			recentRequests = await getRecentRequests();
+		} catch (e) {
+			recentRequestsError = e instanceof Error ? e : new Error('Failed to load');
+		} finally {
+			recentRequestsLoading = false;
+		}
+	}
+
+	function refreshAll() {
+		fetchTotals();
+		fetchCostByModel();
+		fetchCostOverTime();
+		fetchTokensData();
+		fetchAgentBreakdown();
+		fetchModelPerformance();
+		fetchRecentRequests();
+	}
+
+	// Initial data fetch
+	onMount(() => {
+		refreshAll();
+
 		const interval = setInterval(() => {
 			currentTime = new Date().toLocaleTimeString();
 		}, 1000);
 		return () => clearInterval(interval);
 	});
-
-	function refreshAll() {
-		getTotals().refresh();
-		getCostByModel().refresh();
-		getCostOverTime().refresh();
-		getTokensData().refresh();
-		getAgentBreakdown().refresh();
-		getModelPerformance().refresh();
-		getRecentRequests().refresh();
-	}
 
 	function formatNumber(n: number): string {
 		if (n >= 1_000_000) return (n / 1_000_000).toFixed(2) + 'M';
@@ -61,6 +227,28 @@
 		if (total <= 0) return '0%';
 		return ((part / total) * 100).toFixed(1) + '%';
 	}
+
+	// Derived data for charts
+	let costTimeData = $derived(
+		costOverTime?.map((d) => ({ date: d.date, value: d.cost_usd })) ?? []
+	);
+	let modelCostData = $derived(
+		costByModel?.slice(0, 8).map((d) => ({ label: getModelShortName(d.model_id), value: d.cost_usd })) ?? []
+	);
+	let tokensTimeData = $derived(
+		costOverTime?.map((d) => ({
+			date: d.date,
+			tokens_input: d.tokens_input,
+			tokens_output: d.tokens_output
+		})) ?? []
+	);
+	let agentCostData = $derived(
+		agentBreakdown?.map((d) => ({
+			label: d.agent || 'unknown',
+			value: d.cost_usd
+		})) ?? []
+	);
+	let totalPrompt = $derived((totals?.total_input ?? 0) + (totals?.total_cache_read ?? 0));
 </script>
 
 {#snippet loadingState()}
@@ -70,7 +258,7 @@
 	</div>
 {/snippet}
 
-{#snippet errorState(error: unknown, retry: () => void)}
+{#snippet errorState(error: Error | null, retry: () => void)}
 	<div class="error-state">
 		<span class="text-sm">Failed to load</span>
 		<button onclick={retry} class="retry-btn">Retry</button>
@@ -103,33 +291,29 @@
 
 	<!-- Main Stats Row -->
 	<section class="stats-grid" aria-label="Top-level totals">
-		<svelte:boundary>
-			{#snippet pending()}
-				<div class="panel reveal" style="animation-delay: 80ms;">
-					<div class="stat-value accent pulse">--</div>
-					<div class="stat-label">total spent</div>
-				</div>
-				<div class="panel reveal" style="animation-delay: 110ms;">
-					<div class="stat-value accent pulse">--</div>
-					<div class="stat-label">total requests</div>
-				</div>
-				<div class="panel reveal" style="animation-delay: 140ms;">
-					<div class="stat-value primary pulse">--</div>
-					<div class="stat-label">input tokens</div>
-					<div class="stat-sublabel">cached --</div>
-				</div>
-				<div class="panel reveal" style="animation-delay: 170ms;">
-					<div class="stat-value secondary pulse">--</div>
-					<div class="stat-label">output tokens</div>
-				</div>
-			{/snippet}
-			{#snippet failed(error, retry)}
-				<div class="panel flex items-center justify-center">
-					{@render errorState(error, retry)}
-				</div>
-			{/snippet}
-			{@const totals = await getTotals()}
-			{@const totalPrompt = totals.total_input + totals.total_cache_read}
+		{#if totalsLoading}
+			<div class="panel reveal" style="animation-delay: 80ms;">
+				<div class="stat-value accent pulse">--</div>
+				<div class="stat-label">total spent</div>
+			</div>
+			<div class="panel reveal" style="animation-delay: 110ms;">
+				<div class="stat-value accent pulse">--</div>
+				<div class="stat-label">total requests</div>
+			</div>
+			<div class="panel reveal" style="animation-delay: 140ms;">
+				<div class="stat-value primary pulse">--</div>
+				<div class="stat-label">input tokens</div>
+				<div class="stat-sublabel">cached --</div>
+			</div>
+			<div class="panel reveal" style="animation-delay: 170ms;">
+				<div class="stat-value secondary pulse">--</div>
+				<div class="stat-label">output tokens</div>
+			</div>
+		{:else if totalsError}
+			<div class="panel flex items-center justify-center">
+				{@render errorState(totalsError, fetchTotals)}
+			</div>
+		{:else if totals}
 			<div class="panel reveal" style="animation-delay: 80ms;">
 				<div class="stat-value accent">{formatCost(totals.total_cost)}</div>
 				<div class="stat-label">total spent</div>
@@ -151,45 +335,39 @@
 				<div class="stat-value secondary">{formatNumber(totals.total_output)}</div>
 				<div class="stat-label">output tokens</div>
 			</div>
-		</svelte:boundary>
+		{/if}
 	</section>
 
 	<!-- Charts Row 1 -->
 	<section class="charts-grid">
 		<div class="panel reveal" style="animation-delay: 210ms;">
 			<h2 class="section-title">cost over time</h2>
-			<svelte:boundary>
-				{#snippet pending()}
-					{@render loadingState()}
-				{/snippet}
-				{#snippet failed(error, retry)}
-					{@render errorState(error, retry)}
-				{/snippet}
-				{@const costOverTime = await getCostOverTime()}
-				{@const costTimeData = costOverTime.map((d) => ({ date: d.date, value: d.cost_usd }))}
+			{#if costOverTimeLoading}
+				{@render loadingState()}
+			{:else if costOverTimeError}
+				{@render errorState(costOverTimeError, fetchCostOverTime)}
+			{:else if costTimeData.length > 0}
 				<AreaChart
 					data={costTimeData}
 					height={220}
 					color="var(--color-accent)"
 					gradientId="costGrad"
 				/>
-			</svelte:boundary>
+			{:else}
+				<div class="text-tertiary text-sm py-8 text-center">No data available</div>
+			{/if}
 		</div>
 		<div class="panel reveal" style="animation-delay: 240ms;">
 			<h2 class="section-title">cost by model</h2>
-			<svelte:boundary>
-				{#snippet pending()}
-					{@render loadingState()}
-				{/snippet}
-				{#snippet failed(error, retry)}
-					{@render errorState(error, retry)}
-				{/snippet}
-				{@const costByModel = await getCostByModel()}
-				{@const modelCostData = costByModel
-					.slice(0, 8)
-					.map((d) => ({ label: getModelShortName(d.model_id), value: d.cost_usd }))}
+			{#if costByModelLoading}
+				{@render loadingState()}
+			{:else if costByModelError}
+				{@render errorState(costByModelError, fetchCostByModel)}
+			{:else if modelCostData.length > 0}
 				<DonutChart data={modelCostData} height={280} />
-			</svelte:boundary>
+			{:else}
+				<div class="text-tertiary text-sm py-8 text-center">No data available</div>
+			{/if}
 		</div>
 	</section>
 
@@ -197,71 +375,54 @@
 	<section class="charts-grid">
 		<div class="panel reveal" style="animation-delay: 270ms;">
 			<h2 class="section-title">token flow</h2>
-			<svelte:boundary>
-				{#snippet pending()}
-					{@render loadingState()}
-				{/snippet}
-				{#snippet failed(error, retry)}
-					{@render errorState(error, retry)}
-				{/snippet}
-				{@const costOverTime = await getCostOverTime()}
-				{@const tokensTimeData = costOverTime.map((d) => ({
-					date: d.date,
-					tokens_input: d.tokens_input,
-					tokens_output: d.tokens_output
-				}))}
+			{#if costOverTimeLoading}
+				{@render loadingState()}
+			{:else if costOverTimeError}
+				{@render errorState(costOverTimeError, fetchCostOverTime)}
+			{:else if tokensTimeData.length > 0}
 				<TokensChart data={tokensTimeData} height={220} />
-			</svelte:boundary>
+			{:else}
+				<div class="text-tertiary text-sm py-8 text-center">No data available</div>
+			{/if}
 		</div>
 		<div class="panel reveal" style="animation-delay: 300ms;">
 			<h2 class="section-title">cost by agent</h2>
-			<svelte:boundary>
-				{#snippet pending()}
-					{@render loadingState()}
-				{/snippet}
-				{#snippet failed(error, retry)}
-					{@render errorState(error, retry)}
-				{/snippet}
-				{@const agentBreakdown = await getAgentBreakdown()}
-				{@const agentCostData = agentBreakdown.map((d) => ({
-					label: d.agent || 'unknown',
-					value: d.cost_usd
-				}))}
+			{#if agentBreakdownLoading}
+				{@render loadingState()}
+			{:else if agentBreakdownError}
+				{@render errorState(agentBreakdownError, fetchAgentBreakdown)}
+			{:else if agentCostData.length > 0}
 				<BarChart data={agentCostData} height={220} color="var(--color-accent)" horizontal={true} />
-			</svelte:boundary>
+			{:else}
+				<div class="text-tertiary text-sm py-8 text-center">No data available</div>
+			{/if}
 		</div>
 	</section>
 
 	<!-- Tokens explorer -->
 	<section class="full-width-grid">
 		<div class="panel reveal" style="animation-delay: 330ms;">
-			<svelte:boundary>
-				{#snippet pending()}
-					<h2 class="section-title">tokens explorer</h2>
-					{@render loadingState()}
-				{/snippet}
-				{#snippet failed(error, retry)}
-					<h2 class="section-title">tokens explorer</h2>
-					{@render errorState(error, retry)}
-				{/snippet}
-				{@const tokensData = await getTokensData()}
+			<h2 class="section-title">tokens explorer</h2>
+			{#if tokensDataLoading}
+				{@render loadingState()}
+			{:else if tokensDataError}
+				{@render errorState(tokensDataError, fetchTokensData)}
+			{:else if tokensData}
 				<TokensZoomChart hourly={tokensData.hourly} daily={tokensData.daily} height={220} />
-			</svelte:boundary>
+			{:else}
+				<div class="text-tertiary text-sm py-8 text-center">No data available</div>
+			{/if}
 		</div>
 	</section>
 
 	<!-- Model Performance Table -->
 	<section class="panel reveal" style="animation-delay: 360ms; margin-bottom: 1.5rem;">
 		<h2 class="section-title">model performance</h2>
-		<svelte:boundary>
-			{#snippet pending()}
-				{@render loadingState()}
-			{/snippet}
-			{#snippet failed(error, retry)}
-				{@render errorState(error, retry)}
-			{/snippet}
-			{@const costByModel = await getCostByModel()}
-			{@const modelPerformance = await getModelPerformance()}
+		{#if costByModelLoading || modelPerformanceLoading}
+			{@render loadingState()}
+		{:else if costByModelError || modelPerformanceError}
+			{@render errorState(costByModelError || modelPerformanceError, () => { fetchCostByModel(); fetchModelPerformance(); })}
+		{:else if costByModel && costByModel.length > 0}
 			<div class="table-container">
 				<table>
 					<thead>
@@ -276,7 +437,7 @@
 					</thead>
 					<tbody>
 						{#each costByModel as model}
-							{@const avgDuration = modelPerformance.find((d) => d.model_id === model.model_id)}
+							{@const avgDuration = modelPerformance?.find((d) => d.model_id === model.model_id)}
 							<tr>
 								<td class="font-mono text-sm">
 									<span class="provider-badge">{model.provider_id}</span>
@@ -292,20 +453,19 @@
 					</tbody>
 				</table>
 			</div>
-		</svelte:boundary>
+		{:else}
+			<div class="text-tertiary text-sm py-8 text-center">No data available</div>
+		{/if}
 	</section>
 
 	<!-- Recent Activity -->
 	<section class="panel reveal" style="animation-delay: 390ms; margin-bottom: 1.5rem;">
 		<h2 class="section-title">recent activity</h2>
-		<svelte:boundary>
-			{#snippet pending()}
-				{@render loadingState()}
-			{/snippet}
-			{#snippet failed(error, retry)}
-				{@render errorState(error, retry)}
-			{/snippet}
-			{@const recentRequests = await getRecentRequests()}
+		{#if recentRequestsLoading}
+			{@render loadingState()}
+		{:else if recentRequestsError}
+			{@render errorState(recentRequestsError, fetchRecentRequests)}
+		{:else if recentRequests && recentRequests.length > 0}
 			<div class="table-container scrollable">
 				<table>
 					<thead>
@@ -337,31 +497,22 @@
 					</tbody>
 				</table>
 			</div>
-		</svelte:boundary>
+		{:else}
+			<div class="text-tertiary text-sm py-8 text-center">No data available</div>
+		{/if}
 	</section>
 
 	<!-- Footer -->
 	<footer class="footer reveal" style="animation-delay: 420ms;">
-		<svelte:boundary>
-			{#snippet pending()}
-				<div class="footer-stats">
-					<span>Cache Read: --</span>
-					<span class="text-accent-dim">|</span>
-					<span>Cache Write: --</span>
-					<span class="text-accent-dim">|</span>
-					<span>Reasoning: --</span>
-				</div>
-			{/snippet}
-			{#snippet failed()}
-				<div class="footer-stats">
-					<span>Cache Read: --</span>
-					<span class="text-accent-dim">|</span>
-					<span>Cache Write: --</span>
-					<span class="text-accent-dim">|</span>
-					<span>Reasoning: --</span>
-				</div>
-			{/snippet}
-			{@const totals = await getTotals()}
+		{#if totalsLoading}
+			<div class="footer-stats">
+				<span>Cache Read: --</span>
+				<span class="text-accent-dim">|</span>
+				<span>Cache Write: --</span>
+				<span class="text-accent-dim">|</span>
+				<span>Reasoning: --</span>
+			</div>
+		{:else if totals}
 			<div class="footer-stats">
 				<span>Cache Read: {formatNumber(totals.total_cache_read)}</span>
 				<span class="text-accent-dim">|</span>
@@ -369,7 +520,15 @@
 				<span class="text-accent-dim">|</span>
 				<span>Reasoning: {formatNumber(totals.total_reasoning)}</span>
 			</div>
-		</svelte:boundary>
+		{:else}
+			<div class="footer-stats">
+				<span>Cache Read: --</span>
+				<span class="text-accent-dim">|</span>
+				<span>Cache Write: --</span>
+				<span class="text-accent-dim">|</span>
+				<span>Reasoning: --</span>
+			</div>
+		{/if}
 		<div class="footer-version">OpenCode Stats v1.0</div>
 	</footer>
 </div>
