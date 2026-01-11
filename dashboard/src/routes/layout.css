@@ -1,6 +1,26 @@
 @import 'tailwindcss';
 @plugin '@tailwindcss/typography';
 
+:root {
+	--color-bg-void: #000000;
+	--color-bg-primary: #050505;
+	--color-bg-elevated: #0a0a0a;
+	--color-bg-card: #0f0f0f;
+	--color-bg-hover: #161616;
+	--color-accent: #3b82f6;
+	--color-accent-bright: #60a5fa;
+	--color-accent-dim: rgba(59, 130, 246, 0.32);
+	--color-accent-2: #93c5fd;
+	--color-accent-2-dim: rgba(147, 197, 253, 0.28);
+	--color-text-primary: rgba(255, 255, 255, 0.95);
+	--color-text-secondary: rgba(255, 255, 255, 0.7);
+	--color-text-tertiary: rgba(255, 255, 255, 0.45);
+	--color-grid-line: rgba(255, 255, 255, 0.04);
+	--color-grid-line-bright: rgba(255, 255, 255, 0.1);
+	--font-display: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+	--font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
 html,
 body {
 	background-color: var(--color-bg-void);
