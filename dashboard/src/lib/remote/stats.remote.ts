@@ -1,7 +1,7 @@
 import { query } from '$app/server';
 import { db } from '$lib/server/db';
-import { requests, dailySummary } from '$lib/db/schema';
-import { desc, sql, sum, count, avg } from 'drizzle-orm';
+import { requests, dailySummary, toolCalls, fileEdits } from '$lib/db/schema';
+import { desc, sql, sum, count, avg, eq, isNotNull } from 'drizzle-orm';
 
 // Totals query - aggregate stats
 export const getTotals = query(async () => {
@@ -184,5 +184,141 @@ export const getRecentRequests = query(async () => {
 		tokens_cache_write: Number(r.tokens_cache_write ?? 0),
 		cost_usd: Number(r.cost_usd ?? 0),
 		created_at: r.created_at?.toISOString() ?? new Date().toISOString()
+	}));
+});
+
+// Tool usage stats
+export const getToolStats = query(async () => {
+	const result = await db
+		.select({
+			tool: toolCalls.tool,
+			call_count: count(),
+			success_count: sql<number>`COUNT(*) FILTER (WHERE ${toolCalls.success} = true)`,
+			failure_count: sql<number>`COUNT(*) FILTER (WHERE ${toolCalls.success} = false)`,
+			avg_duration_ms: avg(toolCalls.durationMs),
+			total_duration_ms: sum(toolCalls.durationMs)
+		})
+		.from(toolCalls)
+		.where(isNotNull(toolCalls.completedAt))
+		.groupBy(toolCalls.tool)
+		.orderBy(desc(count()));
+
+	return result.map((r) => ({
+		tool: r.tool,
+		call_count: Number(r.call_count),
+		success_count: Number(r.success_count ?? 0),
+		failure_count: Number(r.failure_count ?? 0),
+		success_rate:
+			Number(r.call_count) > 0
+				? Number(r.success_count ?? 0) / Number(r.call_count)
+				: 0,
+		avg_duration_ms: Number(r.avg_duration_ms ?? 0),
+		total_duration_ms: Number(r.total_duration_ms ?? 0)
+	}));
+});
+
+// Tool stats over time (last 30 days)
+export const getToolStatsOverTime = query(async () => {
+	const result = await db
+		.select({
+			date: sql<string>`DATE(${toolCalls.startedAt})::text`,
+			tool: toolCalls.tool,
+			call_count: count(),
+			success_count: sql<number>`COUNT(*) FILTER (WHERE ${toolCalls.success} = true)`,
+			failure_count: sql<number>`COUNT(*) FILTER (WHERE ${toolCalls.success} = false)`,
+			avg_duration_ms: avg(toolCalls.durationMs)
+		})
+		.from(toolCalls)
+		.where(sql`${toolCalls.startedAt} >= CURRENT_DATE - INTERVAL '30 days'`)
+		.groupBy(sql`DATE(${toolCalls.startedAt})`, toolCalls.tool)
+		.orderBy(sql`DATE(${toolCalls.startedAt})`);
+
+	return result.map((r) => ({
+		date: r.date,
+		tool: r.tool,
+		call_count: Number(r.call_count),
+		success_count: Number(r.success_count ?? 0),
+		failure_count: Number(r.failure_count ?? 0),
+		avg_duration_ms: Number(r.avg_duration_ms ?? 0)
+	}));
+});
+
+// File type stats (language breakdown)
+export const getFileTypeStats = query(async () => {
+	const result = await db
+		.select({
+			file_extension: fileEdits.fileExtension,
+			operation: fileEdits.operation,
+			file_count: count(),
+			lines_added: sum(fileEdits.linesAdded),
+			lines_removed: sum(fileEdits.linesRemoved)
+		})
+		.from(fileEdits)
+		.where(isNotNull(fileEdits.fileExtension))
+		.groupBy(fileEdits.fileExtension, fileEdits.operation)
+		.orderBy(desc(count()));
+
+	return result.map((r) => ({
+		file_extension: r.file_extension,
+		operation: r.operation,
+		file_count: Number(r.file_count),
+		lines_added: Number(r.lines_added ?? 0),
+		lines_removed: Number(r.lines_removed ?? 0),
+		net_lines: Number(r.lines_added ?? 0) - Number(r.lines_removed ?? 0)
+	}));
+});
+
+// File type summary (aggregated by extension)
+export const getFileTypeSummary = query(async () => {
+	const result = await db
+		.select({
+			file_extension: fileEdits.fileExtension,
+			total_operations: count(),
+			edit_count: sql<number>`COUNT(*) FILTER (WHERE ${fileEdits.operation} = 'edit')`,
+			write_count: sql<number>`COUNT(*) FILTER (WHERE ${fileEdits.operation} = 'write')`,
+			read_count: sql<number>`COUNT(*) FILTER (WHERE ${fileEdits.operation} = 'read')`,
+			total_lines_added: sum(fileEdits.linesAdded),
+			total_lines_removed: sum(fileEdits.linesRemoved)
+		})
+		.from(fileEdits)
+		.where(isNotNull(fileEdits.fileExtension))
+		.groupBy(fileEdits.fileExtension)
+		.orderBy(desc(count()));
+
+	return result.map((r) => ({
+		file_extension: r.file_extension,
+		total_operations: Number(r.total_operations),
+		edit_count: Number(r.edit_count ?? 0),
+		write_count: Number(r.write_count ?? 0),
+		read_count: Number(r.read_count ?? 0),
+		total_lines_added: Number(r.total_lines_added ?? 0),
+		total_lines_removed: Number(r.total_lines_removed ?? 0),
+		net_lines: Number(r.total_lines_added ?? 0) - Number(r.total_lines_removed ?? 0)
+	}));
+});
+
+// File type stats over time
+export const getFileTypeStatsOverTime = query(async () => {
+	const result = await db
+		.select({
+			date: sql<string>`DATE(${fileEdits.createdAt})::text`,
+			file_extension: fileEdits.fileExtension,
+			file_count: count(),
+			lines_added: sum(fileEdits.linesAdded),
+			lines_removed: sum(fileEdits.linesRemoved)
+		})
+		.from(fileEdits)
+		.where(
+			sql`${fileEdits.createdAt} >= CURRENT_DATE - INTERVAL '30 days' AND ${fileEdits.fileExtension} IS NOT NULL`
+		)
+		.groupBy(sql`DATE(${fileEdits.createdAt})`, fileEdits.fileExtension)
+		.orderBy(sql`DATE(${fileEdits.createdAt})`);
+
+	return result.map((r) => ({
+		date: r.date,
+		file_extension: r.file_extension,
+		file_count: Number(r.file_count),
+		lines_added: Number(r.lines_added ?? 0),
+		lines_removed: Number(r.lines_removed ?? 0)
 	}));
 });

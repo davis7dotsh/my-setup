@@ -14,6 +14,21 @@ const messageStartTimes = new Map<string, number>();
 // Track recorded messages to avoid duplicates
 const recordedMessages = new Map<string, { input: number; output: number }>();
 
+// Track tool call start times for duration calculation
+const toolStartTimes = new Map<string, number>();
+
+function getFileExtension(filePath: string): string | null {
+  const parts = filePath.split("/");
+  const fileName = parts[parts.length - 1];
+  const extMatch = fileName.match(/\.([^.]+)$/);
+  return extMatch ? extMatch[1].toLowerCase() : null;
+}
+
+function countLines(text: string): number {
+  if (!text) return 0;
+  return text.split("\n").length;
+}
+
 async function loadConfig(): Promise<Config | null> {
   const configPath = join(import.meta.dir, "..", "token-tracker.json");
   const file = Bun.file(configPath);
@@ -172,6 +187,9 @@ export const TokenTrackerPlugin: Plugin = async ({ directory }) => {
     // Tool call capture
     "tool.execute.before": async (input, output) => {
       try {
+        // Track start time for duration calculation
+        toolStartTimes.set(input.callID, Date.now());
+
         await sendEvent(config, {
           type: "tool.before",
           sessionId: input.sessionID,
@@ -187,16 +205,88 @@ export const TokenTrackerPlugin: Plugin = async ({ directory }) => {
 
     "tool.execute.after": async (input, output) => {
       try {
+        // Calculate duration
+        const startTime = toolStartTimes.get(input.callID);
+        const durationMs = startTime ? Date.now() - startTime : null;
+        toolStartTimes.delete(input.callID);
+
+        // Determine success/failure from output
+        const outputStr = String(output.output ?? "");
+        const isError =
+          outputStr.includes("Error:") ||
+          outputStr.includes("error:") ||
+          outputStr.startsWith("Error") ||
+          (output.metadata && (output.metadata as any).error);
+        const success = !isError;
+        const errorMessage = isError ? outputStr.slice(0, 500) : null;
+
         await sendEvent(config, {
           type: "tool.after",
           sessionId: input.sessionID,
           callId: input.callID,
           tool: input.tool,
           title: output.title,
-          output: truncate(String(output.output ?? ""), MAX_TOOL_OUTPUT_CHARS),
+          output: truncate(outputStr, MAX_TOOL_OUTPUT_CHARS),
           metadata: output.metadata,
+          durationMs,
+          success,
+          errorMessage,
           createdAt: new Date().toISOString(),
         });
+
+        // Track file edits for language stats
+        if (input.tool === "edit" || input.tool === "write") {
+          const args = output.args as any;
+          const filePath = args?.filePath;
+          if (filePath && success) {
+            const fileExtension = getFileExtension(filePath);
+
+            // Calculate lines changed for edit operations
+            let linesAdded = 0;
+            let linesRemoved = 0;
+            if (input.tool === "edit") {
+              const oldString = args?.oldString || "";
+              const newString = args?.newString || "";
+              linesRemoved = countLines(oldString);
+              linesAdded = countLines(newString);
+            } else if (input.tool === "write") {
+              const content = args?.content || "";
+              linesAdded = countLines(content);
+            }
+
+            await sendEvent(config, {
+              type: "file.edit",
+              sessionId: input.sessionID,
+              toolCallId: input.callID,
+              filePath,
+              fileExtension,
+              operation: input.tool,
+              linesAdded,
+              linesRemoved,
+              createdAt: new Date().toISOString(),
+            });
+          }
+        }
+
+        // Track file reads too for context
+        if (input.tool === "read") {
+          const args = output.args as any;
+          const filePath = args?.filePath;
+          if (filePath && success) {
+            const fileExtension = getFileExtension(filePath);
+            await sendEvent(config, {
+              type: "file.edit",
+              sessionId: input.sessionID,
+              toolCallId: input.callID,
+              filePath,
+              fileExtension,
+              operation: "read",
+              linesAdded: 0,
+              linesRemoved: 0,
+              createdAt: new Date().toISOString(),
+            });
+          }
+        }
       } catch {
         // ignore
       }

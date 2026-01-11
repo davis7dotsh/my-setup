@@ -7,7 +7,9 @@ import {
 	dailySummary,
 	turns,
 	toolCalls,
-	assistantTextParts
+	assistantTextParts,
+	fileEdits,
+	promptOutcomes
 } from '$lib/db/schema';
 import { and, desc, eq, isNull, sql } from 'drizzle-orm';
 import { publishLiveEvent } from '$lib/server/live';
@@ -65,6 +67,21 @@ type ToolAfterEvent = {
 	title: string;
 	output: string;
 	metadata: unknown;
+	durationMs?: number | null;
+	success?: boolean;
+	errorMessage?: string | null;
+	createdAt?: string;
+};
+
+type FileEditEvent = {
+	type: 'file.edit';
+	sessionId: string;
+	toolCallId: string;
+	filePath: string;
+	fileExtension: string | null;
+	operation: string;
+	linesAdded: number;
+	linesRemoved: number;
 	createdAt?: string;
 };
 
@@ -82,7 +99,8 @@ type TelemetryEvent =
 	| PromptEvent
 	| ToolBeforeEvent
 	| ToolAfterEvent
-	| AssistantTextEvent;
+	| AssistantTextEvent
+	| FileEditEvent;
 
 function coerceDate(input?: string): Date {
 	if (!input) return new Date();
@@ -235,6 +253,9 @@ export const POST: RequestHandler = async ({ request }) => {
 						title: event.title,
 						output: event.output,
 						metadata: event.metadata,
+						durationMs: event.durationMs ?? null,
+						success: event.success ?? null,
+						errorMessage: event.errorMessage ?? null,
 						startedAt: timestamp,
 						completedAt: timestamp
 					})
@@ -244,6 +265,9 @@ export const POST: RequestHandler = async ({ request }) => {
 							title: event.title,
 							output: event.output,
 							metadata: event.metadata,
+							durationMs: event.durationMs ?? null,
+							success: event.success ?? null,
+							errorMessage: event.errorMessage ?? null,
 							completedAt: timestamp
 						}
 					});
@@ -254,6 +278,60 @@ export const POST: RequestHandler = async ({ request }) => {
 					callId: event.callId,
 					tool: event.tool,
 					title: event.title,
+					success: event.success,
+					durationMs: event.durationMs,
+					createdAt: timestamp.toISOString()
+				});
+
+				return json({ success: true });
+			}
+
+			case 'file.edit': {
+				if (!event.sessionId || !event.filePath || !event.operation) {
+					return json({ error: 'Missing required fields' }, { status: 400 });
+				}
+
+				const timestamp = coerceDate(event.createdAt);
+
+				// Find the tool call ID if we have it
+				let toolCallId: number | null = null;
+				if (event.toolCallId) {
+					const toolCall = await db
+						.select({ id: toolCalls.id })
+						.from(toolCalls)
+						.where(eq(toolCalls.callId, event.toolCallId))
+						.limit(1);
+					toolCallId = toolCall[0]?.id ?? null;
+				}
+
+				// Find the open turn for this session
+				const openTurn = await db
+					.select({ id: turns.id })
+					.from(turns)
+					.where(and(eq(turns.sessionId, event.sessionId), isNull(turns.assistantMessageId)))
+					.orderBy(desc(turns.createdAt))
+					.limit(1);
+
+				await db.insert(fileEdits).values({
+					sessionId: event.sessionId,
+					turnId: openTurn[0]?.id ?? null,
+					toolCallId,
+					filePath: event.filePath,
+					fileExtension: event.fileExtension,
+					operation: event.operation,
+					linesAdded: event.linesAdded ?? 0,
+					linesRemoved: event.linesRemoved ?? 0,
+					createdAt: timestamp
+				});
+
+				publishLiveEvent({
+					type: 'file.edit',
+					sessionId: event.sessionId,
+					filePath: event.filePath,
+					fileExtension: event.fileExtension,
+					operation: event.operation,
+					linesAdded: event.linesAdded,
+					linesRemoved: event.linesRemoved,
 					createdAt: timestamp.toISOString()
 				});
 

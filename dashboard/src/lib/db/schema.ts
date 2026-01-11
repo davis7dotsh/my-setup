@@ -7,7 +7,8 @@ import {
 	uniqueIndex,
 	serial,
 	timestamp,
-	jsonb
+	jsonb,
+	boolean
 } from 'drizzle-orm/pg-core';
 
 // Main requests table - one row per LLM call
@@ -142,12 +143,18 @@ export const toolCalls = pgTable(
 		output: text('output'),
 		metadata: jsonb('metadata'),
 
+		// Execution metrics
+		durationMs: integer('duration_ms'),
+		success: boolean('success'),
+		errorMessage: text('error_message'),
+
 		startedAt: timestamp('started_at', { withTimezone: true }).notNull(),
 		completedAt: timestamp('completed_at', { withTimezone: true })
 	},
 	(table) => [
 		index('idx_tool_calls_session').on(table.sessionId),
 		index('idx_tool_calls_turn').on(table.turnId),
+		index('idx_tool_calls_tool').on(table.tool),
 		uniqueIndex('idx_tool_calls_call_id').on(table.callId)
 	]
 );
@@ -170,6 +177,69 @@ export const assistantTextParts = pgTable(
 	]
 );
 
+// File edits - track file operations for language/file type stats
+export const fileEdits = pgTable(
+	'file_edits',
+	{
+		id: serial('id').primaryKey(),
+		sessionId: text('session_id').notNull(),
+		turnId: integer('turn_id').references(() => turns.id, { onDelete: 'set null' }),
+		toolCallId: integer('tool_call_id').references(() => toolCalls.id, { onDelete: 'set null' }),
+
+		// File info
+		filePath: text('file_path').notNull(),
+		fileExtension: text('file_extension'),
+		operation: text('operation').notNull(), // 'edit', 'write', 'read'
+
+		// Change metrics (for edit/write operations)
+		linesAdded: integer('lines_added'),
+		linesRemoved: integer('lines_removed'),
+
+		createdAt: timestamp('created_at', { withTimezone: true }).notNull()
+	},
+	(table) => [
+		index('idx_file_edits_session').on(table.sessionId),
+		index('idx_file_edits_extension').on(table.fileExtension),
+		index('idx_file_edits_operation').on(table.operation),
+		index('idx_file_edits_created').on(table.createdAt)
+	]
+);
+
+// Prompt outcomes - track which prompts led to success
+export const promptOutcomes = pgTable(
+	'prompt_outcomes',
+	{
+		id: serial('id').primaryKey(),
+		sessionId: text('session_id').notNull(),
+		turnId: integer('turn_id').references(() => turns.id, { onDelete: 'cascade' }),
+
+		// Prompt info
+		promptHash: text('prompt_hash').notNull(), // Hash for similarity grouping
+		promptLength: integer('prompt_length').notNull(),
+		promptPreview: text('prompt_preview').notNull(), // First 500 chars
+
+		// Outcome metrics
+		toolCallCount: integer('tool_call_count').default(0),
+		successfulToolCalls: integer('successful_tool_calls').default(0),
+		failedToolCalls: integer('failed_tool_calls').default(0),
+		filesEdited: integer('files_edited').default(0),
+		tokensUsed: integer('tokens_used').default(0),
+		costUsd: doublePrecision('cost_usd').default(0),
+
+		// User feedback (can be updated later)
+		userRating: integer('user_rating'), // 1-5 scale, null if not rated
+		markedSuccessful: boolean('marked_successful'), // Explicit success/fail flag
+
+		createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
+		completedAt: timestamp('completed_at', { withTimezone: true })
+	},
+	(table) => [
+		index('idx_prompt_outcomes_session').on(table.sessionId),
+		index('idx_prompt_outcomes_hash').on(table.promptHash),
+		index('idx_prompt_outcomes_created').on(table.createdAt)
+	]
+);
+
 // Type exports for querying
 export type Request = typeof requests.$inferSelect;
 export type NewRequest = typeof requests.$inferInsert;
@@ -183,3 +253,7 @@ export type ToolCall = typeof toolCalls.$inferSelect;
 export type NewToolCall = typeof toolCalls.$inferInsert;
 export type AssistantTextPart = typeof assistantTextParts.$inferSelect;
 export type NewAssistantTextPart = typeof assistantTextParts.$inferInsert;
+export type FileEdit = typeof fileEdits.$inferSelect;
+export type NewFileEdit = typeof fileEdits.$inferInsert;
+export type PromptOutcome = typeof promptOutcomes.$inferSelect;
+export type NewPromptOutcome = typeof promptOutcomes.$inferInsert;
