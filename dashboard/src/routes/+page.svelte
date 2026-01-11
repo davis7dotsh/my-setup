@@ -59,89 +59,89 @@
 </script>
 
 {#snippet loadingState()}
-	<div class="loading-skeleton">
-		<div class="skeleton-bar"></div>
-		<div class="skeleton-bar short"></div>
+	<div class="flex flex-col gap-2 py-4">
+		<div class="h-6 rounded animate-shimmer"></div>
+		<div class="h-6 w-3/5 rounded animate-shimmer"></div>
 	</div>
 {/snippet}
 
 {#snippet errorState(error: unknown, retry: () => void)}
-	<div class="error-inline">
-		<span class="error-text">Failed to load</span>
-		<button onclick={retry} class="retry-btn-small">Retry</button>
+	<div class="flex items-center gap-3 p-2 text-accent">
+		<span class="text-sm">Failed to load</span>
+		<button onclick={retry} class="text-xs px-2 py-1 bg-transparent border border-accent-dim text-text-secondary hover:border-accent hover:text-accent cursor-pointer">Retry</button>
 	</div>
 {/snippet}
 
-<div class="dashboard">
+<div class="min-h-screen p-6 max-w-[1600px] mx-auto">
 	<!-- Header -->
-	<header class="header">
-		<div class="header-left">
-			<h1 class="logo">
-				<span class="logo-bracket">[</span>
-				<span class="logo-text">OPENCODE</span>
-				<span class="logo-bracket">]</span>
-				<span class="logo-suffix">stats</span>
+	<header class="flex justify-between items-center mb-8 pb-4 border-b border-grid-line-bright">
+		<div class="flex items-center gap-6">
+			<h1 class="text-2xl font-bold flex items-baseline gap-0.5">
+				<span class="text-accent-dim">[</span>
+				<span class="text-accent">OPENCODE</span>
+				<span class="text-accent-dim">]</span>
+				<span class="text-text-tertiary font-normal text-base ml-1">stats</span>
 			</h1>
 		</div>
-		<div class="header-right">
-			<div class="clock">{currentTime}</div>
-			<button onclick={refreshAll} class="refresh-btn">
-				<span class="refresh-icon">↻</span> REFRESH
+		<div class="flex items-center gap-6">
+			<div class="text-xl text-text-secondary tabular-nums">{currentTime}</div>
+			<button onclick={refreshAll} class="flex items-center gap-2 px-4 py-2 bg-bg-elevated border border-accent-dim text-accent-bright hover:bg-accent-dim hover:border-accent-bright cursor-pointer">
+				<span class="text-base">↻</span> REFRESH
 			</button>
 		</div>
 	</header>
 
 	<!-- Main Stats Row -->
-	<section class="stats-grid">
+	<section class="grid grid-cols-4 gap-4 mb-6 max-lg:grid-cols-2 max-md:grid-cols-1">
 		<svelte:boundary>
 			{#snippet pending()}
-				<div class="stat-card primary">
-					<div class="stat-value loading-pulse">--</div>
-					<div class="stat-label">TOTAL SPENT</div>
+				<div class="bg-bg-card border border-grid-line-bright p-6 relative overflow-hidden before:content-[''] before:absolute before:top-0 before:left-0 before:right-0 before:h-0.5 before:bg-gradient-to-r before:from-transparent before:via-accent-dim before:to-transparent">
+					<div class="text-4xl font-bold text-accent leading-none animate-pulse-custom">--</div>
+					<div class="text-xs text-text-tertiary uppercase tracking-widest mt-2">TOTAL SPENT</div>
 				</div>
-				<div class="stat-card">
-					<div class="stat-value cyan loading-pulse">--</div>
-					<div class="stat-label">TOTAL REQUESTS</div>
+				<div class="bg-bg-card border border-grid-line-bright p-6 relative overflow-hidden before:content-[''] before:absolute before:top-0 before:left-0 before:right-0 before:h-0.5 before:bg-gradient-to-r before:from-transparent before:via-accent-dim before:to-transparent">
+					<div class="text-4xl font-bold text-accent leading-none animate-pulse-custom">--</div>
+					<div class="text-xs text-text-tertiary uppercase tracking-widest mt-2">TOTAL REQUESTS</div>
 				</div>
-				<div class="stat-card">
-					<div class="stat-value magenta loading-pulse">--</div>
-					<div class="stat-label">INPUT TOKENS</div>
+				<div class="bg-bg-card border border-grid-line-bright p-6 relative overflow-hidden before:content-[''] before:absolute before:top-0 before:left-0 before:right-0 before:h-0.5 before:bg-gradient-to-r before:from-transparent before:via-accent-dim before:to-transparent">
+					<div class="text-4xl font-bold text-white/92 leading-none animate-pulse-custom">--</div>
+					<div class="text-xs text-text-tertiary uppercase tracking-widest mt-2">INPUT TOKENS</div>
 				</div>
-				<div class="stat-card">
-					<div class="stat-value amber loading-pulse">--</div>
-					<div class="stat-label">OUTPUT TOKENS</div>
+				<div class="bg-bg-card border border-grid-line-bright p-6 relative overflow-hidden before:content-[''] before:absolute before:top-0 before:left-0 before:right-0 before:h-0.5 before:bg-gradient-to-r before:from-transparent before:via-accent-dim before:to-transparent">
+					<div class="text-4xl font-bold text-white/[0.78] leading-none animate-pulse-custom">--</div>
+					<div class="text-xs text-text-tertiary uppercase tracking-widest mt-2">OUTPUT TOKENS</div>
 				</div>
 			{/snippet}
 			{#snippet failed(error, retry)}
-				<div class="stat-card primary error-card">
+				<div class="bg-bg-card border border-accent-dim p-6 flex items-center justify-center">
 					{@render errorState(error, retry)}
 				</div>
 			{/snippet}
 			{@const totals = await getTotals()}
-			<div class="stat-card primary">
-				<div class="stat-value">{formatCost(totals.total_cost)}</div>
-				<div class="stat-label">TOTAL SPENT</div>
-				<div class="stat-decoration"></div>
+			<div class="bg-bg-card border border-accent-dim p-6 relative overflow-hidden before:content-[''] before:absolute before:top-0 before:left-0 before:right-0 before:h-[3px] before:bg-gradient-to-r before:from-transparent before:via-accent before:to-transparent">
+				<div class="text-4xl font-bold text-accent leading-none">{formatCost(totals.total_cost)}</div>
+				<div class="text-xs text-text-tertiary uppercase tracking-widest mt-2">TOTAL SPENT</div>
+				<div class="absolute -bottom-5 -right-5 w-[100px] h-[100px] bg-[radial-gradient(circle,rgba(59,130,246,0.08)_0%,transparent_70%)] pointer-events-none"></div>
 			</div>
-			<div class="stat-card">
-				<div class="stat-value cyan">{formatNumber(totals.total_requests)}</div>
-				<div class="stat-label">TOTAL REQUESTS</div>
+			<div class="bg-bg-card border border-grid-line-bright p-6 relative overflow-hidden before:content-[''] before:absolute before:top-0 before:left-0 before:right-0 before:h-0.5 before:bg-gradient-to-r before:from-transparent before:via-accent-dim before:to-transparent">
+				<div class="text-4xl font-bold text-accent leading-none">{formatNumber(totals.total_requests)}</div>
+				<div class="text-xs text-text-tertiary uppercase tracking-widest mt-2">TOTAL REQUESTS</div>
 			</div>
-			<div class="stat-card">
-				<div class="stat-value magenta">{formatNumber(totals.total_input)}</div>
-				<div class="stat-label">INPUT TOKENS</div>
+			<div class="bg-bg-card border border-grid-line-bright p-6 relative overflow-hidden before:content-[''] before:absolute before:top-0 before:left-0 before:right-0 before:h-0.5 before:bg-gradient-to-r before:from-transparent before:via-accent-dim before:to-transparent">
+				<div class="text-4xl font-bold text-white/[0.92] leading-none">{formatNumber(totals.total_input)}</div>
+				<div class="text-xs text-text-tertiary uppercase tracking-widest mt-2">INPUT TOKENS</div>
 			</div>
-			<div class="stat-card">
-				<div class="stat-value amber">{formatNumber(totals.total_output)}</div>
-				<div class="stat-label">OUTPUT TOKENS</div>
+			<div class="bg-bg-card border border-grid-line-bright p-6 relative overflow-hidden before:content-[''] before:absolute before:top-0 before:left-0 before:right-0 before:h-0.5 before:bg-gradient-to-r before:from-transparent before:via-accent-dim before:to-transparent">
+				<div class="text-4xl font-bold text-white/[0.78] leading-none">{formatNumber(totals.total_output)}</div>
+				<div class="text-xs text-text-tertiary uppercase tracking-widest mt-2">OUTPUT TOKENS</div>
 			</div>
 		</svelte:boundary>
 	</section>
 
 	<!-- Charts Row 1 -->
-	<section class="charts-row">
-		<div class="chart-card wide">
-			<h2>COST OVER TIME</h2>
+	<section class="grid grid-cols-[2fr_1fr] gap-4 mb-6 max-lg:grid-cols-1">
+		<div class="bg-bg-card border border-grid-line-bright p-6">
+			<h2 class="mb-4 text-xs font-medium text-text-secondary uppercase tracking-[0.15em]">COST OVER TIME</h2>
 			<svelte:boundary>
 				{#snippet pending()}
 					{@render loadingState()}
@@ -154,8 +154,8 @@
 				<AreaChart data={costTimeData} height={220} color="#3b82f6" gradientId="costGrad" />
 			</svelte:boundary>
 		</div>
-		<div class="chart-card">
-			<h2>COST BY MODEL</h2>
+		<div class="bg-bg-card border border-grid-line-bright p-6">
+			<h2 class="mb-4 text-xs font-medium text-text-secondary uppercase tracking-[0.15em]">COST BY MODEL</h2>
 			<svelte:boundary>
 				{#snippet pending()}
 					{@render loadingState()}
@@ -173,9 +173,9 @@
 	</section>
 
 	<!-- Charts Row 2 -->
-	<section class="charts-row">
-		<div class="chart-card wide">
-			<h2>TOKEN FLOW</h2>
+	<section class="grid grid-cols-[2fr_1fr] gap-4 mb-6 max-lg:grid-cols-1">
+		<div class="bg-bg-card border border-grid-line-bright p-6">
+			<h2 class="mb-4 text-xs font-medium text-text-secondary uppercase tracking-[0.15em]">TOKEN FLOW</h2>
 			<svelte:boundary>
 				{#snippet pending()}
 					{@render loadingState()}
@@ -192,8 +192,8 @@
 				<TokensChart data={tokensTimeData} height={220} />
 			</svelte:boundary>
 		</div>
-		<div class="chart-card">
-			<h2>COST BY AGENT</h2>
+		<div class="bg-bg-card border border-grid-line-bright p-6">
+			<h2 class="mb-4 text-xs font-medium text-text-secondary uppercase tracking-[0.15em]">COST BY AGENT</h2>
 			<svelte:boundary>
 				{#snippet pending()}
 					{@render loadingState()}
@@ -212,15 +212,15 @@
 	</section>
 
 	<!-- Tokens explorer -->
-	<section class="charts-row single">
-		<div class="chart-card full">
+	<section class="grid grid-cols-1 gap-4 mb-6">
+		<div class="bg-bg-card border border-grid-line-bright p-6 w-full">
 			<svelte:boundary>
 				{#snippet pending()}
-					<h2>TOKENS EXPLORER</h2>
+					<h2 class="mb-4 text-xs font-medium text-text-secondary uppercase tracking-[0.15em]">TOKENS EXPLORER</h2>
 					{@render loadingState()}
 				{/snippet}
 				{#snippet failed(error, retry)}
-					<h2>TOKENS EXPLORER</h2>
+					<h2 class="mb-4 text-xs font-medium text-text-secondary uppercase tracking-[0.15em]">TOKENS EXPLORER</h2>
 					{@render errorState(error, retry)}
 				{/snippet}
 				{@const tokensData = await getTokensData()}
@@ -230,8 +230,8 @@
 	</section>
 
 	<!-- Model Performance Table -->
-	<section class="table-section">
-		<h2>MODEL PERFORMANCE</h2>
+	<section class="bg-bg-card border border-grid-line-bright p-6 mb-6">
+		<h2 class="mb-4 text-xs font-medium text-text-secondary uppercase tracking-[0.15em]">MODEL PERFORMANCE</h2>
 		<svelte:boundary>
 			{#snippet pending()}
 				{@render loadingState()}
@@ -241,7 +241,7 @@
 			{/snippet}
 			{@const costByModel = await getCostByModel()}
 			{@const modelPerformance = await getModelPerformance()}
-			<div class="table-wrapper">
+			<div class="overflow-x-auto">
 				<table>
 					<thead>
 						<tr>
@@ -257,15 +257,15 @@
 						{#each costByModel as model}
 							{@const avgDuration = modelPerformance.find((d) => d.model_id === model.model_id)}
 							<tr>
-								<td class="model-name">
-									<span class="provider-tag">{model.provider_id}</span>
+								<td class="font-mono text-sm">
+									<span class="inline-block bg-transparent border border-accent-dim text-text-secondary px-1.5 py-0.5 text-[0.65rem] mr-2 uppercase">{model.provider_id}</span>
 									{getModelShortName(model.model_id)}
 								</td>
 								<td>{model.request_count.toLocaleString()}</td>
-								<td class="cyan-text">{formatNumber(model.tokens_input)}</td>
-								<td class="magenta-text">{formatNumber(model.tokens_output)}</td>
+								<td class="text-accent">{formatNumber(model.tokens_input)}</td>
+								<td class="text-white/[0.92]">{formatNumber(model.tokens_output)}</td>
 								<td>{avgDuration ? formatDuration(avgDuration.avg_duration_ms) : '-'}</td>
-								<td class="cost-cell">{formatCost(model.cost_usd)}</td>
+								<td class="text-accent font-medium">{formatCost(model.cost_usd)}</td>
 							</tr>
 						{/each}
 					</tbody>
@@ -275,8 +275,8 @@
 	</section>
 
 	<!-- Recent Activity -->
-	<section class="table-section">
-		<h2>RECENT ACTIVITY</h2>
+	<section class="bg-bg-card border border-grid-line-bright p-6 mb-6">
+		<h2 class="mb-4 text-xs font-medium text-text-secondary uppercase tracking-[0.15em]">RECENT ACTIVITY</h2>
 		<svelte:boundary>
 			{#snippet pending()}
 				{@render loadingState()}
@@ -285,7 +285,7 @@
 				{@render errorState(error, retry)}
 			{/snippet}
 			{@const recentRequests = await getRecentRequests()}
-			<div class="table-wrapper recent">
+			<div class="overflow-x-auto max-h-[400px] overflow-y-auto">
 				<table>
 					<thead>
 						<tr>
@@ -299,7 +299,7 @@
 					<tbody>
 						{#each recentRequests.slice(0, 15) as req}
 							<tr>
-								<td class="time-cell">
+								<td class="text-text-tertiary text-sm">
 									{new Date(req.created_at).toLocaleString(undefined, {
 										month: 'short',
 										day: 'numeric',
@@ -307,10 +307,10 @@
 										minute: '2-digit'
 									})}
 								</td>
-								<td class="model-name">{getModelShortName(req.model_id)}</td>
-								<td class="cyan-text">{formatNumber(req.tokens_input)}</td>
-								<td class="magenta-text">{formatNumber(req.tokens_output)}</td>
-								<td class="cost-cell">{formatCost(req.cost_usd)}</td>
+								<td class="font-mono text-sm">{getModelShortName(req.model_id)}</td>
+								<td class="text-accent">{formatNumber(req.tokens_input)}</td>
+								<td class="text-white/[0.92]">{formatNumber(req.tokens_output)}</td>
+								<td class="text-accent font-medium">{formatCost(req.cost_usd)}</td>
 							</tr>
 						{/each}
 					</tbody>
@@ -320,369 +320,35 @@
 	</section>
 
 	<!-- Footer -->
-	<footer class="footer">
+	<footer class="flex justify-between items-center py-6 border-t border-grid-line-bright text-text-tertiary text-xs">
 		<svelte:boundary>
 			{#snippet pending()}
-				<div class="footer-stats">
+				<div class="flex gap-2">
 					<span>Cache Read: --</span>
-					<span class="separator">|</span>
+					<span class="text-accent-dim">|</span>
 					<span>Cache Write: --</span>
-					<span class="separator">|</span>
+					<span class="text-accent-dim">|</span>
 					<span>Reasoning: --</span>
 				</div>
 			{/snippet}
 			{#snippet failed()}
-				<div class="footer-stats">
+				<div class="flex gap-2">
 					<span>Cache Read: --</span>
-					<span class="separator">|</span>
+					<span class="text-accent-dim">|</span>
 					<span>Cache Write: --</span>
-					<span class="separator">|</span>
+					<span class="text-accent-dim">|</span>
 					<span>Reasoning: --</span>
 				</div>
 			{/snippet}
 			{@const totals = await getTotals()}
-			<div class="footer-stats">
+			<div class="flex gap-2">
 				<span>Cache Read: {formatNumber(totals.total_cache_read)}</span>
-				<span class="separator">|</span>
+				<span class="text-accent-dim">|</span>
 				<span>Cache Write: {formatNumber(totals.total_cache_write)}</span>
-				<span class="separator">|</span>
+				<span class="text-accent-dim">|</span>
 				<span>Reasoning: {formatNumber(totals.total_reasoning)}</span>
 			</div>
 		</svelte:boundary>
-		<div class="footer-brand">OPENCODE STATS v1.0</div>
+		<div class="tracking-[0.15em]">OPENCODE STATS v1.0</div>
 	</footer>
 </div>
-
-<style>
-	.dashboard {
-		min-height: 100vh;
-		padding: 1.5rem;
-		max-width: 1600px;
-		margin: 0 auto;
-	}
-
-	/* Header */
-	.header {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		margin-bottom: 2rem;
-		padding-bottom: 1rem;
-		border-bottom: 1px solid var(--grid-line-bright);
-	}
-
-	.header-left {
-		display: flex;
-		align-items: center;
-		gap: 1.5rem;
-	}
-
-	.logo {
-		font-size: 1.5rem;
-		font-weight: 700;
-		display: flex;
-		align-items: baseline;
-		gap: 0.1rem;
-	}
-
-	.logo-bracket {
-		color: var(--green-dim);
-	}
-
-	.logo-text {
-		color: var(--green-glow);
-	}
-
-	.logo-suffix {
-		color: var(--text-tertiary);
-		font-weight: 400;
-		font-size: 1rem;
-		margin-left: 0.25rem;
-	}
-
-	.header-right {
-		display: flex;
-		align-items: center;
-		gap: 1.5rem;
-	}
-
-	.clock {
-		font-size: 1.25rem;
-		color: var(--text-secondary);
-		font-variant-numeric: tabular-nums;
-	}
-
-	.refresh-btn {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-	}
-
-	.refresh-icon {
-		font-size: 1rem;
-	}
-
-	/* Loading states */
-	.loading-skeleton {
-		display: flex;
-		flex-direction: column;
-		gap: 0.5rem;
-		padding: 1rem 0;
-	}
-
-	.skeleton-bar {
-		height: 1.5rem;
-		background: linear-gradient(
-			90deg,
-			var(--bg-card) 0%,
-			var(--grid-line-bright) 50%,
-			var(--bg-card) 100%
-		);
-		background-size: 200% 100%;
-		animation: shimmer 1.5s infinite;
-		border-radius: 4px;
-	}
-
-	.skeleton-bar.short {
-		width: 60%;
-	}
-
-	@keyframes shimmer {
-		0% {
-			background-position: 200% 0;
-		}
-		100% {
-			background-position: -200% 0;
-		}
-	}
-
-	.loading-pulse {
-		animation: pulse 1.5s ease-in-out infinite;
-	}
-
-	@keyframes pulse {
-		0%,
-		100% {
-			opacity: 1;
-		}
-		50% {
-			opacity: 0.4;
-		}
-	}
-
-	.error-inline {
-		display: flex;
-		align-items: center;
-		gap: 0.75rem;
-		padding: 0.5rem;
-		color: var(--accent);
-	}
-
-	.error-text {
-		font-size: 0.85rem;
-	}
-
-	.retry-btn-small {
-		font-size: 0.75rem;
-		padding: 0.25rem 0.5rem;
-		background: transparent;
-		border: 1px solid var(--accent-dim);
-		color: var(--text-secondary);
-		cursor: pointer;
-	}
-
-	.retry-btn-small:hover {
-		border-color: var(--accent);
-		color: var(--accent);
-	}
-
-	.error-card {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
-
-	/* Stats Grid */
-	.stats-grid {
-		display: grid;
-		grid-template-columns: repeat(4, 1fr);
-		gap: 1rem;
-		margin-bottom: 1.5rem;
-	}
-
-	.stat-card {
-		background: var(--bg-card);
-		border: 1px solid var(--grid-line-bright);
-		border-radius: var(--radius-md);
-		padding: 1.5rem;
-		position: relative;
-		overflow: hidden;
-	}
-
-	.stat-card::before {
-		content: '';
-		position: absolute;
-		top: 0;
-		left: 0;
-		right: 0;
-		height: 2px;
-		background: linear-gradient(90deg, transparent, var(--green-dim), transparent);
-	}
-
-	.stat-card.primary {
-		border-color: var(--accent-dim);
-	}
-
-	.stat-card.primary::before {
-		background: linear-gradient(90deg, transparent, var(--green-glow), transparent);
-		height: 3px;
-	}
-
-	.stat-decoration {
-		position: absolute;
-		bottom: -20px;
-		right: -20px;
-		width: 100px;
-		height: 100px;
-		background: radial-gradient(circle, rgba(59, 130, 246, 0.08) 0%, transparent 70%);
-		pointer-events: none;
-	}
-
-	/* Charts */
-	.charts-row {
-		display: grid;
-		grid-template-columns: 2fr 1fr;
-		gap: 1rem;
-		margin-bottom: 1.5rem;
-	}
-
-	.charts-row.single {
-		grid-template-columns: 1fr;
-	}
-
-	.chart-card {
-		background: var(--bg-card);
-		border: 1px solid var(--grid-line-bright);
-		border-radius: var(--radius-md);
-		padding: 1.5rem;
-	}
-
-	.chart-card h2 {
-		margin-bottom: 1rem;
-		font-size: 0.75rem;
-	}
-
-	.chart-card.full {
-		width: 100%;
-	}
-
-	/* Tables */
-	.table-section {
-		background: var(--bg-card);
-		border: 1px solid var(--grid-line-bright);
-		border-radius: var(--radius-md);
-		padding: 1.5rem;
-		margin-bottom: 1.5rem;
-	}
-
-	.table-section h2 {
-		margin-bottom: 1rem;
-		font-size: 0.75rem;
-	}
-
-	.table-wrapper {
-		overflow-x: auto;
-	}
-
-	.table-wrapper.recent {
-		max-height: 400px;
-		overflow-y: auto;
-	}
-
-	.model-name {
-		font-family: 'IBM Plex Mono', monospace;
-		font-size: 0.85rem;
-	}
-
-	.provider-tag {
-		display: inline-block;
-		background: transparent;
-		border: 1px solid var(--accent-dim);
-		color: var(--text-secondary);
-		padding: 0.1rem 0.4rem;
-		border-radius: 0;
-		font-size: 0.65rem;
-		margin-right: 0.5rem;
-		text-transform: uppercase;
-	}
-
-	.cyan-text {
-		color: var(--cyan-glow);
-	}
-
-	.magenta-text {
-		color: var(--magenta-glow);
-	}
-
-	.cost-cell {
-		color: var(--green-glow);
-		font-weight: 500;
-	}
-
-	.time-cell {
-		color: var(--text-tertiary);
-		font-size: 0.8rem;
-	}
-
-	/* Footer */
-	.footer {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		padding: 1.5rem 0;
-		border-top: 1px solid var(--grid-line-bright);
-		color: var(--text-tertiary);
-		font-size: 0.75rem;
-	}
-
-	.footer-stats {
-		display: flex;
-		gap: 0.5rem;
-	}
-
-	.separator {
-		color: var(--green-dim);
-	}
-
-	.footer-brand {
-		letter-spacing: 0.15em;
-	}
-
-	/* Responsive */
-	@media (max-width: 1200px) {
-		.stats-grid {
-			grid-template-columns: repeat(2, 1fr);
-		}
-
-		.charts-row {
-			grid-template-columns: 1fr;
-		}
-	}
-
-	@media (max-width: 768px) {
-		.stats-grid {
-			grid-template-columns: 1fr;
-		}
-
-		.header {
-			flex-direction: column;
-			gap: 1rem;
-			align-items: flex-start;
-		}
-
-		.header-right {
-			width: 100%;
-			justify-content: space-between;
-		}
-	}
-</style>

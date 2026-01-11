@@ -482,13 +482,13 @@
 	});
 </script>
 
-<div class="header">
-	<h2>TOKENS OVER TIME</h2>
-	<div class="range">
+<div class="flex items-baseline justify-between gap-4 mb-3">
+	<h2 class="m-0 text-xs font-medium text-text-secondary uppercase tracking-[0.15em]">TOKENS OVER TIME</h2>
+	<div class="flex gap-1.5">
 		{#each ['day', 'week', 'month', 'year'] as r}
 			<button
 				type="button"
-				class:active={range === (r as Range)}
+				class="px-2 py-1 text-[0.65rem] tracking-[0.1em] uppercase border border-grid-line-bright bg-transparent text-text-tertiary cursor-pointer hover:text-text-secondary {range === (r as Range) ? '!text-text-primary !border-[rgba(59,130,246,0.6)] !bg-[rgba(59,130,246,0.12)]' : ''}"
 				onclick={() => setRange(r as Range)}
 			>
 				{labelForRange(r as Range)}
@@ -511,39 +511,3 @@
 		</div>
 	{/if}
 </div>
-
-<style>
-	.header {
-		display: flex;
-		align-items: baseline;
-		justify-content: space-between;
-		gap: 1rem;
-		margin-bottom: 0.75rem;
-	}
-
-	.header h2 {
-		margin: 0;
-		font-size: 0.75rem;
-	}
-
-	.range {
-		display: flex;
-		gap: 0.4rem;
-	}
-
-	.range button {
-		padding: 0.25rem 0.55rem;
-		font-size: 0.65rem;
-		letter-spacing: 0.1em;
-		text-transform: uppercase;
-		border: 1px solid var(--grid-line-bright);
-		background: transparent;
-		color: var(--text-tertiary);
-	}
-
-	.range button.active {
-		color: var(--text-primary);
-		border-color: rgba(59, 130, 246, 0.6);
-		background: rgba(59, 130, 246, 0.12);
-	}
-</style>
