@@ -1,0 +1,11 @@
+{
+  "name": "opencode-setup",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "setup": "bun run index.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  }
+}

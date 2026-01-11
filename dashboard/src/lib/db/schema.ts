@@ -1,10 +1,10 @@
-import { sqliteTable, text, integer, real, index, uniqueIndex } from "drizzle-orm/sqlite-core"
+import { pgTable, text, integer, doublePrecision, index, uniqueIndex, serial, timestamp } from "drizzle-orm/pg-core"
 
 // Main requests table - one row per LLM call
-export const requests = sqliteTable(
+export const requests = pgTable(
   "requests",
   {
-    id: integer("id").primaryKey({ autoIncrement: true }),
+    id: serial("id").primaryKey(),
 
     // Identifiers
     messageId: text("message_id").notNull().unique(),
@@ -21,16 +21,16 @@ export const requests = sqliteTable(
     tokensCacheWrite: integer("tokens_cache_write").notNull().default(0),
 
     // Metrics
-    costUsd: real("cost_usd").notNull().default(0),
+    costUsd: doublePrecision("cost_usd").notNull().default(0),
     durationMs: integer("duration_ms"),
     finishReason: text("finish_reason"),
 
     // Context
     workingDir: text("working_dir"),
 
-    // Timestamps (stored as ISO strings)
-    createdAt: text("created_at").notNull(),
-    completedAt: text("completed_at"),
+    // Timestamps
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
   },
   (table) => [
     index("idx_requests_session").on(table.sessionId),
@@ -41,23 +41,23 @@ export const requests = sqliteTable(
 )
 
 // Sessions table for denormalized lookups
-export const sessions = sqliteTable("sessions", {
+export const sessions = pgTable("sessions", {
   sessionId: text("session_id").primaryKey(),
   projectDir: text("project_dir"),
   title: text("title"),
-  firstRequestAt: text("first_request_at"),
-  lastRequestAt: text("last_request_at"),
+  firstRequestAt: timestamp("first_request_at", { withTimezone: true }),
+  lastRequestAt: timestamp("last_request_at", { withTimezone: true }),
   totalRequests: integer("total_requests").default(0),
-  totalCostUsd: real("total_cost_usd").default(0),
+  totalCostUsd: doublePrecision("total_cost_usd").default(0),
   totalTokensInput: integer("total_tokens_input").default(0),
   totalTokensOutput: integer("total_tokens_output").default(0),
 })
 
 // Daily summary for fast aggregation queries
-export const dailySummary = sqliteTable(
+export const dailySummary = pgTable(
   "daily_summary",
   {
-    id: integer("id").primaryKey({ autoIncrement: true }),
+    id: serial("id").primaryKey(),
     date: text("date").notNull(),
     providerId: text("provider_id").notNull(),
     modelId: text("model_id").notNull(),
@@ -68,7 +68,7 @@ export const dailySummary = sqliteTable(
     tokensReasoning: integer("tokens_reasoning").default(0),
     tokensCacheRead: integer("tokens_cache_read").default(0),
     tokensCacheWrite: integer("tokens_cache_write").default(0),
-    costUsd: real("cost_usd").default(0),
+    costUsd: doublePrecision("cost_usd").default(0),
   },
   (table) => [
     index("idx_daily_date").on(table.date),

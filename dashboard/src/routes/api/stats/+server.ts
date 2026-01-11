@@ -1,236 +1,168 @@
-import { json } from '@sveltejs/kit';
-import { getDb, type DailySummary, type Request, type Session } from '$lib/server/db';
+import { json } from "@sveltejs/kit";
+import { db } from "$lib/server/db";
+import { requests, sessions, dailySummary } from "$lib/db/schema";
+import { desc, sql, sum, count, avg } from "drizzle-orm";
 
-export function GET() {
-	const db = getDb();
+export async function GET() {
+  try {
+    // Get all daily summaries
+    const dailySummaries = await db
+      .select()
+      .from(dailySummary)
+      .orderBy(desc(dailySummary.date));
 
-	try {
-		// Get all daily summaries
-		const dailySummaries = db
-			.prepare(
-				`
-			SELECT * FROM daily_summary 
-			ORDER BY date DESC
-		`
-			)
-			.all() as DailySummary[];
+    // Get recent requests (last 100)
+    const recentRequests = await db
+      .select()
+      .from(requests)
+      .orderBy(desc(requests.createdAt))
+      .limit(100);
 
-		// Get recent requests (last 100)
-		const recentRequests = db
-			.prepare(
-				`
-			SELECT * FROM requests 
-			ORDER BY created_at DESC 
-			LIMIT 100
-		`
-			)
-			.all() as Request[];
+    // Get sessions
+    const sessionsList = await db
+      .select()
+      .from(sessions)
+      .orderBy(desc(sessions.lastRequestAt))
+      .limit(50);
 
-		// Get sessions
-		const sessions = db
-			.prepare(
-				`
-			SELECT * FROM sessions 
-			ORDER BY last_request_at DESC 
-			LIMIT 50
-		`
-			)
-			.all() as Session[];
+    // Aggregate totals
+    const totalsResult = await db
+      .select({
+        total_requests: count(),
+        total_input: sum(requests.tokensInput),
+        total_output: sum(requests.tokensOutput),
+        total_reasoning: sum(requests.tokensReasoning),
+        total_cache_read: sum(requests.tokensCacheRead),
+        total_cache_write: sum(requests.tokensCacheWrite),
+        total_cost: sum(requests.costUsd),
+      })
+      .from(requests);
 
-		// Aggregate totals
-		const totals = db
-			.prepare(
-				`
-			SELECT 
-				COUNT(*) as total_requests,
-				SUM(tokens_input) as total_input,
-				SUM(tokens_output) as total_output,
-				SUM(tokens_reasoning) as total_reasoning,
-				SUM(tokens_cache_read) as total_cache_read,
-				SUM(tokens_cache_write) as total_cache_write,
-				SUM(cost_usd) as total_cost
-			FROM requests
-		`
-			)
-			.get() as {
-			total_requests: number;
-			total_input: number;
-			total_output: number;
-			total_reasoning: number;
-			total_cache_read: number;
-			total_cache_write: number;
-			total_cost: number;
-		};
+    const totals = {
+      total_requests: Number(totalsResult[0]?.total_requests ?? 0),
+      total_input: Number(totalsResult[0]?.total_input ?? 0),
+      total_output: Number(totalsResult[0]?.total_output ?? 0),
+      total_reasoning: Number(totalsResult[0]?.total_reasoning ?? 0),
+      total_cache_read: Number(totalsResult[0]?.total_cache_read ?? 0),
+      total_cache_write: Number(totalsResult[0]?.total_cache_write ?? 0),
+      total_cost: Number(totalsResult[0]?.total_cost ?? 0),
+    };
 
-		// Cost by model
-		const costByModel = db
-			.prepare(
-				`
-			SELECT 
-				model_id,
-				provider_id,
-				COUNT(*) as request_count,
-				SUM(tokens_input) as tokens_input,
-				SUM(tokens_output) as tokens_output,
-				SUM(cost_usd) as cost_usd
-			FROM requests
-			GROUP BY model_id, provider_id
-			ORDER BY cost_usd DESC
-		`
-			)
-			.all() as {
-			model_id: string;
-			provider_id: string;
-			request_count: number;
-			tokens_input: number;
-			tokens_output: number;
-			cost_usd: number;
-		}[];
+    // Cost by model
+    const costByModel = await db
+      .select({
+        model_id: requests.modelId,
+        provider_id: requests.providerId,
+        request_count: count(),
+        tokens_input: sum(requests.tokensInput),
+        tokens_output: sum(requests.tokensOutput),
+        cost_usd: sum(requests.costUsd),
+      })
+      .from(requests)
+      .groupBy(requests.modelId, requests.providerId)
+      .orderBy(desc(sum(requests.costUsd)));
 
-		// Usage by hour of day
-		const usageByHour = db
-			.prepare(
-				`
-			SELECT 
-				CAST(strftime('%H', created_at) AS INTEGER) as hour,
-				COUNT(*) as request_count,
-				SUM(cost_usd) as cost_usd
-			FROM requests
-			GROUP BY hour
-			ORDER BY hour
-		`
-			)
-			.all() as { hour: number; request_count: number; cost_usd: number }[];
+    // Usage by hour of day
+    const usageByHour = await db
+      .select({
+        hour: sql<number>`EXTRACT(HOUR FROM ${requests.createdAt})::int`,
+        request_count: count(),
+        cost_usd: sum(requests.costUsd),
+      })
+      .from(requests)
+      .groupBy(sql`EXTRACT(HOUR FROM ${requests.createdAt})`)
+      .orderBy(sql`EXTRACT(HOUR FROM ${requests.createdAt})`);
 
-		// Tokens by hour (today)
-		const tokensByHourToday = db
-			.prepare(
-				`
-			SELECT 
-				CAST(strftime('%H', created_at, 'localtime') AS INTEGER) as hour,
-				COALESCE(SUM(tokens_input), 0) as tokens_input,
-				COALESCE(SUM(tokens_output), 0) as tokens_output
-			FROM requests
-			WHERE date(created_at, 'localtime') = date('now', 'localtime')
-			GROUP BY hour
-			ORDER BY hour
-		`
-			)
-			.all() as { hour: number; tokens_input: number; tokens_output: number }[];
+    // Tokens by hour (today)
+    const tokensByHourToday = await db
+      .select({
+        hour: sql<number>`EXTRACT(HOUR FROM ${requests.createdAt})::int`,
+        tokens_input: sql<number>`COALESCE(SUM(${requests.tokensInput}), 0)`,
+        tokens_output: sql<number>`COALESCE(SUM(${requests.tokensOutput}), 0)`,
+      })
+      .from(requests)
+      .where(sql`DATE(${requests.createdAt}) = CURRENT_DATE`)
+      .groupBy(sql`EXTRACT(HOUR FROM ${requests.createdAt})`)
+      .orderBy(sql`EXTRACT(HOUR FROM ${requests.createdAt})`);
 
-		// Tokens by day (last 365 days)
-		const tokensByDay = db
-			.prepare(
-				`
-			SELECT
-				date as date,
-				COALESCE(SUM(tokens_input), 0) as tokens_input,
-				COALESCE(SUM(tokens_output), 0) as tokens_output
-			FROM daily_summary
-			WHERE date >= date('now', '-365 days')
-			GROUP BY date
-			ORDER BY date ASC
-		`
-			)
-			.all() as { date: string; tokens_input: number; tokens_output: number }[];
+    // Tokens by day (last 365 days)
+    const tokensByDay = await db
+      .select({
+        date: dailySummary.date,
+        tokens_input: sql<number>`COALESCE(SUM(${dailySummary.tokensInput}), 0)`,
+        tokens_output: sql<number>`COALESCE(SUM(${dailySummary.tokensOutput}), 0)`,
+      })
+      .from(dailySummary)
+      .where(sql`${dailySummary.date}::date >= CURRENT_DATE - INTERVAL '365 days'`)
+      .groupBy(dailySummary.date)
+      .orderBy(dailySummary.date);
 
-		// Usage by day of week
-		const usageByDayOfWeek = db
-			.prepare(
-				`
-			SELECT 
-				CAST(strftime('%w', created_at) AS INTEGER) as day_of_week,
-				COUNT(*) as request_count,
-				SUM(cost_usd) as cost_usd
-			FROM requests
-			GROUP BY day_of_week
-			ORDER BY day_of_week
-		`
-			)
-			.all() as { day_of_week: number; request_count: number; cost_usd: number }[];
+    // Usage by day of week
+    const usageByDayOfWeek = await db
+      .select({
+        day_of_week: sql<number>`EXTRACT(DOW FROM ${requests.createdAt})::int`,
+        request_count: count(),
+        cost_usd: sum(requests.costUsd),
+      })
+      .from(requests)
+      .groupBy(sql`EXTRACT(DOW FROM ${requests.createdAt})`)
+      .orderBy(sql`EXTRACT(DOW FROM ${requests.createdAt})`);
 
-		// Cost over time (last 30 days)
-		const costOverTime = db
-			.prepare(
-				`
-			SELECT 
-				date,
-				SUM(request_count) as request_count,
-				SUM(tokens_input) as tokens_input,
-				SUM(tokens_output) as tokens_output,
-				SUM(cost_usd) as cost_usd
-			FROM daily_summary
-			WHERE date >= date('now', '-30 days')
-			GROUP BY date
-			ORDER BY date ASC
-		`
-			)
-			.all() as {
-			date: string;
-			request_count: number;
-			tokens_input: number;
-			tokens_output: number;
-			cost_usd: number;
-		}[];
+    // Cost over time (last 30 days)
+    const costOverTime = await db
+      .select({
+        date: dailySummary.date,
+        request_count: sum(dailySummary.requestCount),
+        tokens_input: sum(dailySummary.tokensInput),
+        tokens_output: sum(dailySummary.tokensOutput),
+        cost_usd: sum(dailySummary.costUsd),
+      })
+      .from(dailySummary)
+      .where(sql`${dailySummary.date}::date >= CURRENT_DATE - INTERVAL '30 days'`)
+      .groupBy(dailySummary.date)
+      .orderBy(dailySummary.date);
 
-		// Agent breakdown
-		const agentBreakdown = db
-			.prepare(
-				`
-			SELECT 
-				agent,
-				COUNT(*) as request_count,
-				SUM(tokens_input) as tokens_input,
-				SUM(tokens_output) as tokens_output,
-				SUM(cost_usd) as cost_usd
-			FROM requests
-			GROUP BY agent
-			ORDER BY cost_usd DESC
-		`
-			)
-			.all() as {
-			agent: string;
-			request_count: number;
-			tokens_input: number;
-			tokens_output: number;
-			cost_usd: number;
-		}[];
+    // Agent breakdown
+    const agentBreakdown = await db
+      .select({
+        agent: requests.agent,
+        request_count: count(),
+        tokens_input: sum(requests.tokensInput),
+        tokens_output: sum(requests.tokensOutput),
+        cost_usd: sum(requests.costUsd),
+      })
+      .from(requests)
+      .groupBy(requests.agent)
+      .orderBy(desc(sum(requests.costUsd)));
 
-		// Average response time by model
-		const avgDurationByModel = db
-			.prepare(
-				`
-			SELECT 
-				model_id,
-				AVG(duration_ms) as avg_duration_ms,
-				COUNT(*) as request_count
-			FROM requests
-			WHERE duration_ms IS NOT NULL
-			GROUP BY model_id
-			ORDER BY avg_duration_ms DESC
-		`
-			)
-			.all() as { model_id: string; avg_duration_ms: number; request_count: number }[];
+    // Average response time by model
+    const avgDurationByModel = await db
+      .select({
+        model_id: requests.modelId,
+        avg_duration_ms: avg(requests.durationMs),
+        request_count: count(),
+      })
+      .from(requests)
+      .where(sql`${requests.durationMs} IS NOT NULL`)
+      .groupBy(requests.modelId)
+      .orderBy(desc(avg(requests.durationMs)));
 
-		db.close();
-
-		return json({
-			totals,
-			dailySummaries,
-			recentRequests,
-			sessions,
-			costByModel,
-			usageByHour,
-			tokensByHourToday,
-			tokensByDay,
-			usageByDayOfWeek,
-			costOverTime,
-			agentBreakdown,
-			avgDurationByModel
-		});
-	} catch (e) {
-		db.close();
-		console.error('Database error:', e);
-		return json({ error: 'Failed to fetch stats' }, { status: 500 });
-	}
+    return json({
+      totals,
+      dailySummaries,
+      recentRequests,
+      sessions: sessionsList,
+      costByModel,
+      usageByHour,
+      tokensByHourToday,
+      tokensByDay,
+      usageByDayOfWeek,
+      costOverTime,
+      agentBreakdown,
+      avgDurationByModel,
+    });
+  } catch (e) {
+    console.error("Database error:", e);
+    return json({ error: "Failed to fetch stats" }, { status: 500 });
+  }
 }
