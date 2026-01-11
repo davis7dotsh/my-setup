@@ -14,7 +14,7 @@
 
 	let svgElement: SVGSVGElement;
 	let containerEl: HTMLDivElement;
-	let actualWidth = $state(width);
+	let actualWidth = $state(0);
 
 	type TooltipState = {
 		x: number;
@@ -325,6 +325,7 @@
 
 	onMount(() => {
 		if (containerEl) {
+			actualWidth = containerEl.clientWidth || width;
 			const resizeObserver = new ResizeObserver((entries) => {
 				for (const entry of entries) {
 					actualWidth = entry.contentRect.width;

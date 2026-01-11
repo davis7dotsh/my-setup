@@ -18,8 +18,8 @@
 
 	let svgElement: SVGSVGElement;
 	let containerEl: HTMLDivElement;
-	let actualWidth = $state(width);
-	let range = $state<Range>(initialRange);
+	let actualWidth = $state(0);
+	let range = $state<Range>('day');
 
 	type TooltipState = {
 		x: number;
@@ -464,7 +464,9 @@
 	}
 
 	onMount(() => {
+		range = initialRange;
 		if (containerEl) {
+			actualWidth = containerEl.clientWidth || width;
 			const resizeObserver = new ResizeObserver((entries) => {
 				for (const entry of entries) {
 					actualWidth = entry.contentRect.width;

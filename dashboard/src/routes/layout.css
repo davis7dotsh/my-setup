@@ -1,91 +1,91 @@
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap');
-
-@import 'tailwindcss';
+@import "tailwindcss";
 @plugin '@tailwindcss/typography';
 
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap");
+
 @theme {
-	/* Background colors */
-	--color-bg-void: #000000;
-	--color-bg-primary: #050506;
-	--color-bg-elevated: #0b0b0d;
-	--color-bg-card: #0f0f12;
-	--color-bg-hover: #15151a;
+  /* Background colors */
+  --color-bg-void: #000000;
+  --color-bg-primary: #050506;
+  --color-bg-elevated: #0b0b0d;
+  --color-bg-card: #0f0f12;
+  --color-bg-hover: #15151a;
 
-	/* Accent */
-	--color-accent: #3b82f6;
-	--color-accent-bright: #60a5fa;
-	--color-accent-dim: rgba(59, 130, 246, 0.35);
+  /* Accent */
+  --color-accent: #3b82f6;
+  --color-accent-bright: #60a5fa;
+  --color-accent-dim: rgba(59, 130, 246, 0.35);
 
-	/* Text */
-	--color-text-primary: rgba(255, 255, 255, 0.92);
-	--color-text-secondary: rgba(255, 255, 255, 0.68);
-	--color-text-tertiary: rgba(255, 255, 255, 0.45);
+  /* Text */
+  --color-text-primary: rgba(255, 255, 255, 0.92);
+  --color-text-secondary: rgba(255, 255, 255, 0.68);
+  --color-text-tertiary: rgba(255, 255, 255, 0.45);
 
-	/* Grid */
-	--color-grid-line: rgba(255, 255, 255, 0.035);
-	--color-grid-line-bright: rgba(255, 255, 255, 0.085);
+  /* Grid */
+  --color-grid-line: rgba(255, 255, 255, 0.035);
+  --color-grid-line-bright: rgba(255, 255, 255, 0.085);
 
-	/* Font */
-	--font-mono: 'IBM Plex Mono', 'SF Mono', Consolas, monospace;
+  /* Font */
+  --font-mono: "IBM Plex Mono", "SF Mono", Consolas, monospace;
 }
 
 * {
-	margin: 0;
-	padding: 0;
-	box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 html {
-	font-size: 14px;
-	scroll-behavior: smooth;
+  font-size: 14px;
+  scroll-behavior: smooth;
 }
 
 body {
-	font-family: var(--font-mono);
-	background: var(--color-bg-void);
-	color: var(--color-text-primary);
-	line-height: 1.6;
-	min-height: 100vh;
-	overflow-x: hidden;
+  font-family: var(--font-mono);
+  background: var(--color-bg-void);
+  color: var(--color-text-primary);
+  line-height: 1.6;
+  min-height: 100vh;
+  overflow-x: hidden;
 }
 
 /* Grid background */
 body::after {
-	content: '';
-	position: fixed;
-	top: 0;
-	left: 0;
-	right: 0;
-	bottom: 0;
-	background-image: linear-gradient(var(--color-grid-line) 1px, transparent 1px),
-		linear-gradient(90deg, var(--color-grid-line) 1px, transparent 1px);
-	background-size: 40px 40px;
-	pointer-events: none;
-	z-index: -1;
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: linear-gradient(var(--color-grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-grid-line) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: -1;
 }
 
 ::selection {
-	background: var(--color-accent);
-	color: var(--color-bg-void);
+  background: var(--color-accent);
+  color: var(--color-bg-void);
 }
 
 /* Scrollbar */
 ::-webkit-scrollbar {
-	width: 8px;
-	height: 8px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-	background: var(--color-bg-primary);
+  background: var(--color-bg-primary);
 }
 
 ::-webkit-scrollbar-thumb {
-	background: rgba(255, 255, 255, 0.18);
-	border-radius: 0;
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 0;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-	background: rgba(59, 130, 246, 0.45);
+  background: rgba(59, 130, 246, 0.45);
 }
 
 /* Typography base */
@@ -93,139 +93,155 @@ h1,
 h2,
 h3,
 h4 {
-	font-family: var(--font-mono);
-	font-weight: 600;
-	letter-spacing: 0.02em;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  letter-spacing: 0.02em;
 }
 
 /* Links */
 a {
-	color: var(--color-accent-bright);
-	text-decoration: none;
-	transition: color 0.2s ease;
+  color: var(--color-accent-bright);
+  text-decoration: none;
+  transition: color 0.2s ease;
 }
 
 a:hover {
-	color: var(--color-accent);
+  color: var(--color-accent);
 }
 
 /* Tables base */
 table {
-	width: 100%;
-	border-collapse: collapse;
+  width: 100%;
+  border-collapse: collapse;
 }
 
 th,
 td {
-	text-align: left;
-	padding: 0.75rem;
-	border-bottom: 1px solid var(--color-grid-line-bright);
+  text-align: left;
+  padding: 0.5rem;
+  border-bottom: 1px solid var(--color-grid-line-bright);
+  font-size: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  th,
+  td {
+    padding: 0.75rem;
+    font-size: inherit;
+  }
 }
 
 th {
-	color: var(--color-text-tertiary);
-	font-weight: 500;
-	text-transform: uppercase;
-	font-size: 0.7rem;
-	letter-spacing: 0.1em;
+  color: var(--color-text-tertiary);
+  font-weight: 500;
+  text-transform: uppercase;
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+}
+
+@media (min-width: 640px) {
+  th {
+    font-size: 0.7rem;
+  }
 }
 
 tr:hover td {
-	background: var(--color-bg-hover);
+  background: var(--color-bg-hover);
 }
 
 /* D3 Chart SVG base */
 .chart-container {
-	position: relative;
+  position: relative;
 }
 
 .chart-container svg {
-	overflow: visible;
-	display: block;
+  overflow: visible;
+  display: block;
 }
 
 .chart-container text {
-	font-family: var(--font-mono);
-	fill: var(--color-text-secondary);
-	font-size: 10px;
+  font-family: var(--font-mono);
+  fill: var(--color-text-secondary);
+  font-size: 10px;
 }
 
 .chart-container .axis line,
 .chart-container .axis path {
-	stroke: var(--color-grid-line-bright);
+  stroke: var(--color-grid-line-bright);
 }
 
 .chart-container .grid line {
-	stroke: var(--color-grid-line);
+  stroke: var(--color-grid-line);
 }
 
 /* Animations */
 @keyframes pulse {
-	0%,
-	100% {
-		opacity: 1;
-	}
-	50% {
-		opacity: 0.4;
-	}
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
 }
 
 @keyframes shimmer {
-	0% {
-		background-position: 200% 0;
-	}
-	100% {
-		background-position: -200% 0;
-	}
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 .animate-pulse-custom {
-	animation: pulse 1.5s ease-in-out infinite;
+  animation: pulse 1.5s ease-in-out infinite;
 }
 
 .animate-shimmer {
-	background: linear-gradient(
-		90deg,
-		var(--color-bg-card) 0%,
-		var(--color-grid-line-bright) 50%,
-		var(--color-bg-card) 100%
-	);
-	background-size: 200% 100%;
-	animation: shimmer 1.5s infinite;
+  background: linear-gradient(
+    90deg,
+    var(--color-bg-card) 0%,
+    var(--color-grid-line-bright) 50%,
+    var(--color-bg-card) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
 }
 
 /* Tooltip (used by D3 charts) */
 .tooltip {
-	position: absolute;
-	background: rgba(0, 0, 0, 0.92);
-	border: 1px solid var(--color-grid-line-bright);
-	padding: 0.6rem 0.75rem;
-	font-size: 0.75rem;
-	pointer-events: none;
-	z-index: 1000;
-	backdrop-filter: blur(6px);
-	min-width: 160px;
+  position: absolute;
+  background: rgba(0, 0, 0, 0.92);
+  border: 1px solid var(--color-grid-line-bright);
+  padding: 0.6rem 0.75rem;
+  font-size: 0.75rem;
+  pointer-events: none;
+  z-index: 1000;
+  backdrop-filter: blur(6px);
+  min-width: 160px;
 }
 
 .tooltip-title {
-	color: var(--color-text-tertiary);
-	font-size: 0.65rem;
-	letter-spacing: 0.12em;
-	text-transform: uppercase;
-	margin-bottom: 0.35rem;
+  color: var(--color-text-tertiary);
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 0.35rem;
 }
 
 .tooltip-row {
-	display: flex;
-	justify-content: space-between;
-	gap: 1rem;
-	white-space: nowrap;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  white-space: nowrap;
 }
 
 .tooltip-row .value {
-	color: var(--color-text-primary);
+  color: var(--color-text-primary);
 }
 
 .tooltip-row .muted {
-	color: var(--color-text-secondary);
+  color: var(--color-text-secondary);
 }

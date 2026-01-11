@@ -11,4 +11,6 @@
 	<meta name="description" content="Token usage statistics for OpenCode" />
 </svelte:head>
 
+<div class="w-full flex items-center justify-center">
 {@render children()}
+</div>
