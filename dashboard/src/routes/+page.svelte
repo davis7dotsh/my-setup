@@ -12,8 +12,10 @@
 		getTokensData,
 		getAgentBreakdown,
 		getModelPerformance,
-		getRecentRequests
+		getRecentRequests,
+		getFileTypeSummary
 	} from '$lib/remote/stats.remote';
+	import FileTypeChart from '$lib/components/FileTypeChart.svelte';
 
 	// Types for our data
 	type Totals = {
@@ -66,6 +68,16 @@
 		cost_usd: number;
 		created_at: string;
 	};
+	type FileTypeSummaryItem = {
+		file_extension: string | null;
+		total_operations: number;
+		edit_count: number;
+		write_count: number;
+		read_count: number;
+		total_lines_added: number;
+		total_lines_removed: number;
+		net_lines: number;
+	};
 
 	// State for all data
 	let totals = $state<Totals | null>(null);
@@ -75,6 +87,7 @@
 	let agentBreakdown = $state<AgentBreakdownItem[] | null>(null);
 	let modelPerformance = $state<ModelPerformanceItem[] | null>(null);
 	let recentRequests = $state<RecentRequestItem[] | null>(null);
+	let fileTypeSummary = $state<FileTypeSummaryItem[] | null>(null);
 
 	// Loading states
 	let totalsLoading = $state(true);
@@ -84,6 +97,7 @@
 	let agentBreakdownLoading = $state(true);
 	let modelPerformanceLoading = $state(true);
 	let recentRequestsLoading = $state(true);
+	let fileTypeSummaryLoading = $state(true);
 
 	// Error states
 	let totalsError = $state<Error | null>(null);
@@ -93,6 +107,7 @@
 	let agentBreakdownError = $state<Error | null>(null);
 	let modelPerformanceError = $state<Error | null>(null);
 	let recentRequestsError = $state<Error | null>(null);
+	let fileTypeSummaryError = $state<Error | null>(null);
 
 	let currentTime = $state(new Date().toLocaleTimeString());
 
@@ -181,6 +196,18 @@
 		}
 	}
 
+	async function fetchFileTypeSummary() {
+		fileTypeSummaryLoading = true;
+		fileTypeSummaryError = null;
+		try {
+			fileTypeSummary = await getFileTypeSummary();
+		} catch (e) {
+			fileTypeSummaryError = e instanceof Error ? e : new Error('Failed to load');
+		} finally {
+			fileTypeSummaryLoading = false;
+		}
+	}
+
 	function refreshAll() {
 		fetchTotals();
 		fetchCostByModel();
@@ -189,6 +216,7 @@
 		fetchAgentBreakdown();
 		fetchModelPerformance();
 		fetchRecentRequests();
+		fetchFileTypeSummary();
 	}
 
 	// Initial data fetch
@@ -401,9 +429,81 @@
 		</div>
 	</section>
 
+	<!-- Code by Language -->
+	<section class="charts-grid">
+		<div class="panel reveal" style="animation-delay: 315ms;">
+			<h2 class="section-title">lines of code by language</h2>
+			{#if fileTypeSummaryLoading}
+				{@render loadingState()}
+			{:else if fileTypeSummaryError}
+				{@render errorState(fileTypeSummaryError, fetchFileTypeSummary)}
+			{:else if fileTypeSummary && fileTypeSummary.length > 0}
+				<FileTypeChart data={fileTypeSummary} height={320} />
+			{:else}
+				<div class="text-tertiary text-sm py-8 text-center">No file edit data yet</div>
+			{/if}
+		</div>
+		<div class="panel reveal" style="animation-delay: 330ms;">
+			<h2 class="section-title">language stats</h2>
+			{#if fileTypeSummaryLoading}
+				{@render loadingState()}
+			{:else if fileTypeSummaryError}
+				{@render errorState(fileTypeSummaryError, fetchFileTypeSummary)}
+			{:else if fileTypeSummary && fileTypeSummary.length > 0}
+				{@const totalLinesAdded = fileTypeSummary.reduce((sum, d) => sum + d.total_lines_added, 0)}
+				{@const totalLinesRemoved = fileTypeSummary.reduce((sum, d) => sum + d.total_lines_removed, 0)}
+				{@const totalEdits = fileTypeSummary.reduce((sum, d) => sum + d.edit_count + d.write_count, 0)}
+				<div class="language-stats">
+					<div class="lang-stat">
+						<div class="lang-stat-value text-accent">{formatNumber(totalLinesAdded)}</div>
+						<div class="lang-stat-label">total lines added</div>
+					</div>
+					<div class="lang-stat">
+						<div class="lang-stat-value" style="color: #ef4444;">{formatNumber(totalLinesRemoved)}</div>
+						<div class="lang-stat-label">total lines removed</div>
+					</div>
+					<div class="lang-stat">
+						<div class="lang-stat-value" style="color: #22c55e;">{formatNumber(totalLinesAdded - totalLinesRemoved)}</div>
+						<div class="lang-stat-label">net lines</div>
+					</div>
+					<div class="lang-stat">
+						<div class="lang-stat-value text-secondary">{formatNumber(totalEdits)}</div>
+						<div class="lang-stat-label">file edits</div>
+					</div>
+				</div>
+				<div class="lang-table-container">
+					<table class="lang-table">
+						<thead>
+							<tr>
+								<th>ext</th>
+								<th>added</th>
+								<th>removed</th>
+								<th>net</th>
+								<th>edits</th>
+							</tr>
+						</thead>
+						<tbody>
+							{#each fileTypeSummary.slice(0, 8) as item}
+								<tr>
+									<td class="font-mono">.{item.file_extension}</td>
+									<td style="color: #22c55e;">+{formatNumber(item.total_lines_added)}</td>
+									<td style="color: #ef4444;">-{formatNumber(item.total_lines_removed)}</td>
+									<td>{formatNumber(item.net_lines)}</td>
+									<td class="text-tertiary">{item.edit_count + item.write_count}</td>
+								</tr>
+							{/each}
+						</tbody>
+					</table>
+				</div>
+			{:else}
+				<div class="text-tertiary text-sm py-8 text-center">No file edit data yet</div>
+			{/if}
+		</div>
+	</section>
+
 	<!-- Tokens explorer -->
 	<section class="full-width-grid">
-		<div class="panel reveal" style="animation-delay: 330ms;">
+		<div class="panel reveal" style="animation-delay: 345ms;">
 			<h2 class="section-title">tokens explorer</h2>
 			{#if tokensDataLoading}
 				{@render loadingState()}

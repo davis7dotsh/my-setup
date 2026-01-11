@@ -657,3 +657,58 @@ tbody tr:hover {
 		display: inline;
 	}
 }
+
+/* Language stats section */
+.language-stats {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	gap: 1rem;
+	margin-bottom: 1.5rem;
+}
+
+@media (min-width: 480px) {
+	.language-stats {
+		grid-template-columns: repeat(4, 1fr);
+	}
+}
+
+.lang-stat {
+	text-align: center;
+	padding: 0.75rem;
+	background: var(--color-bg-elevated);
+	border: 1px solid var(--color-grid-line);
+}
+
+.lang-stat-value {
+	font-size: 1.25rem;
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+}
+
+.lang-stat-label {
+	font-size: 0.65rem;
+	text-transform: uppercase;
+	letter-spacing: 0.1em;
+	color: var(--color-text-tertiary);
+	margin-top: 0.25rem;
+}
+
+.lang-table-container {
+	max-height: 200px;
+	overflow-y: auto;
+}
+
+.lang-table {
+	width: 100%;
+	font-size: 0.8rem;
+}
+
+.lang-table th {
+	font-size: 0.6rem;
+	padding: 0.5rem;
+}
+
+.lang-table td {
+	padding: 0.4rem 0.5rem;
+	font-variant-numeric: tabular-nums;
+}
