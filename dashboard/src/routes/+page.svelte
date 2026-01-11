@@ -68,13 +68,19 @@
 {#snippet errorState(error: unknown, retry: () => void)}
 	<div class="flex items-center gap-3 p-2 text-accent">
 		<span class="text-sm">Failed to load</span>
-		<button onclick={retry} class="text-xs px-2 py-1 bg-transparent border border-accent-dim text-text-secondary hover:border-accent hover:text-accent cursor-pointer">Retry</button>
+		<button
+			onclick={retry}
+			class="text-xs px-2 py-1 bg-transparent border border-accent-dim text-text-secondary hover:border-accent hover:text-accent cursor-pointer"
+			>Retry</button
+		>
 	</div>
 {/snippet}
 
 <div class="min-h-screen p-4 max-w-[1600px] mx-auto sm:p-6">
 	<!-- Header -->
-	<header class="flex flex-col gap-4 mb-8 pb-4 border-b border-grid-line-bright sm:flex-row sm:justify-between sm:items-center">
+	<header
+		class="flex flex-col gap-4 mb-8 pb-4 border-b border-grid-line-bright sm:flex-row sm:justify-between sm:items-center"
+	>
 		<div class="flex items-center gap-6">
 			<h1 class="text-xl font-bold flex items-baseline gap-0.5 sm:text-2xl">
 				<span class="text-accent-dim">[</span>
@@ -85,7 +91,10 @@
 		</div>
 		<div class="flex items-center justify-between gap-4 sm:gap-6">
 			<div class="text-lg text-text-secondary tabular-nums sm:text-xl">{currentTime}</div>
-			<button onclick={refreshAll} class="flex items-center gap-2 px-3 py-2 bg-bg-elevated border border-accent-dim text-accent-bright hover:bg-accent-dim hover:border-accent-bright cursor-pointer text-sm sm:px-4 sm:text-base">
+			<button
+				onclick={refreshAll}
+				class="flex items-center gap-2 px-3 py-2 bg-bg-elevated border border-accent-dim text-accent-bright hover:bg-accent-dim hover:border-accent-bright cursor-pointer text-sm sm:px-4 sm:text-base"
+			>
 				<span class="text-base">↻</span> <span class="hidden xs:inline">REFRESH</span>
 			</button>
 		</div>
@@ -95,44 +104,86 @@
 	<section class="grid grid-cols-1 gap-4 mb-6 sm:grid-cols-2 lg:grid-cols-4">
 		<svelte:boundary>
 			{#snippet pending()}
-				<div class="bg-bg-card border border-grid-line-bright p-4 sm:p-6 relative overflow-hidden before:content-[''] before:absolute before:top-0 before:left-0 before:right-0 before:h-0.5 before:bg-gradient-to-r before:from-transparent before:via-accent-dim before:to-transparent">
-					<div class="text-2xl sm:text-4xl font-bold text-accent leading-none animate-pulse-custom">--</div>
+				<div
+					class="bg-bg-card border border-grid-line-bright p-4 sm:p-6 relative overflow-hidden before:content-[''] before:absolute before:top-0 before:left-0 before:right-0 before:h-0.5 before:bg-gradient-to-r before:from-transparent before:via-accent-dim before:to-transparent"
+				>
+					<div class="text-2xl sm:text-4xl font-bold text-accent leading-none animate-pulse-custom">
+						--
+					</div>
 					<div class="text-xs text-text-tertiary uppercase tracking-widest mt-2">TOTAL SPENT</div>
 				</div>
-				<div class="bg-bg-card border border-grid-line-bright p-4 sm:p-6 relative overflow-hidden before:content-[''] before:absolute before:top-0 before:left-0 before:right-0 before:h-0.5 before:bg-gradient-to-r before:from-transparent before:via-accent-dim before:to-transparent">
-					<div class="text-2xl sm:text-4xl font-bold text-accent leading-none animate-pulse-custom">--</div>
-					<div class="text-xs text-text-tertiary uppercase tracking-widest mt-2">TOTAL REQUESTS</div>
+				<div
+					class="bg-bg-card border border-grid-line-bright p-4 sm:p-6 relative overflow-hidden before:content-[''] before:absolute before:top-0 before:left-0 before:right-0 before:h-0.5 before:bg-gradient-to-r before:from-transparent before:via-accent-dim before:to-transparent"
+				>
+					<div class="text-2xl sm:text-4xl font-bold text-accent leading-none animate-pulse-custom">
+						--
+					</div>
+					<div class="text-xs text-text-tertiary uppercase tracking-widest mt-2">
+						TOTAL REQUESTS
+					</div>
 				</div>
-				<div class="bg-bg-card border border-grid-line-bright p-4 sm:p-6 relative overflow-hidden before:content-[''] before:absolute before:top-0 before:left-0 before:right-0 before:h-0.5 before:bg-gradient-to-r before:from-transparent before:via-accent-dim before:to-transparent">
-					<div class="text-2xl sm:text-4xl font-bold text-white/92 leading-none animate-pulse-custom">--</div>
+				<div
+					class="bg-bg-card border border-grid-line-bright p-4 sm:p-6 relative overflow-hidden before:content-[''] before:absolute before:top-0 before:left-0 before:right-0 before:h-0.5 before:bg-gradient-to-r before:from-transparent before:via-accent-dim before:to-transparent"
+				>
+					<div
+						class="text-2xl sm:text-4xl font-bold text-white/92 leading-none animate-pulse-custom"
+					>
+						--
+					</div>
 					<div class="text-xs text-text-tertiary uppercase tracking-widest mt-2">INPUT TOKENS</div>
 				</div>
-				<div class="bg-bg-card border border-grid-line-bright p-4 sm:p-6 relative overflow-hidden before:content-[''] before:absolute before:top-0 before:left-0 before:right-0 before:h-0.5 before:bg-gradient-to-r before:from-transparent before:via-accent-dim before:to-transparent">
-					<div class="text-2xl sm:text-4xl font-bold text-white/[0.78] leading-none animate-pulse-custom">--</div>
+				<div
+					class="bg-bg-card border border-grid-line-bright p-4 sm:p-6 relative overflow-hidden before:content-[''] before:absolute before:top-0 before:left-0 before:right-0 before:h-0.5 before:bg-gradient-to-r before:from-transparent before:via-accent-dim before:to-transparent"
+				>
+					<div
+						class="text-2xl sm:text-4xl font-bold text-white/[0.78] leading-none animate-pulse-custom"
+					>
+						--
+					</div>
 					<div class="text-xs text-text-tertiary uppercase tracking-widest mt-2">OUTPUT TOKENS</div>
 				</div>
 			{/snippet}
 			{#snippet failed(error, retry)}
-				<div class="bg-bg-card border border-accent-dim p-4 sm:p-6 flex items-center justify-center">
+				<div
+					class="bg-bg-card border border-accent-dim p-4 sm:p-6 flex items-center justify-center"
+				>
 					{@render errorState(error, retry)}
 				</div>
 			{/snippet}
 			{@const totals = await getTotals()}
-			<div class="bg-bg-card border border-accent-dim p-4 sm:p-6 relative overflow-hidden before:content-[''] before:absolute before:top-0 before:left-0 before:right-0 before:h-[3px] before:bg-gradient-to-r before:from-transparent before:via-accent before:to-transparent">
-				<div class="text-2xl sm:text-4xl font-bold text-accent leading-none">{formatCost(totals.total_cost)}</div>
+			<div
+				class="bg-bg-card border border-accent-dim p-4 sm:p-6 relative overflow-hidden before:content-[''] before:absolute before:top-0 before:left-0 before:right-0 before:h-[3px] before:bg-gradient-to-r before:from-transparent before:via-accent before:to-transparent"
+			>
+				<div class="text-2xl sm:text-4xl font-bold text-accent leading-none">
+					{formatCost(totals.total_cost)}
+				</div>
 				<div class="text-xs text-text-tertiary uppercase tracking-widest mt-2">TOTAL SPENT</div>
-				<div class="absolute -bottom-5 -right-5 w-[100px] h-[100px] bg-[radial-gradient(circle,rgba(59,130,246,0.08)_0%,transparent_70%)] pointer-events-none"></div>
+				<div
+					class="absolute -bottom-5 -right-5 w-[100px] h-[100px] bg-[radial-gradient(circle,rgba(59,130,246,0.08)_0%,transparent_70%)] pointer-events-none"
+				></div>
 			</div>
-			<div class="bg-bg-card border border-grid-line-bright p-4 sm:p-6 relative overflow-hidden before:content-[''] before:absolute before:top-0 before:left-0 before:right-0 before:h-0.5 before:bg-gradient-to-r before:from-transparent before:via-accent-dim before:to-transparent">
-				<div class="text-2xl sm:text-4xl font-bold text-accent leading-none">{formatNumber(totals.total_requests)}</div>
+			<div
+				class="bg-bg-card border border-grid-line-bright p-4 sm:p-6 relative overflow-hidden before:content-[''] before:absolute before:top-0 before:left-0 before:right-0 before:h-0.5 before:bg-gradient-to-r before:from-transparent before:via-accent-dim before:to-transparent"
+			>
+				<div class="text-2xl sm:text-4xl font-bold text-accent leading-none">
+					{formatNumber(totals.total_requests)}
+				</div>
 				<div class="text-xs text-text-tertiary uppercase tracking-widest mt-2">TOTAL REQUESTS</div>
 			</div>
-			<div class="bg-bg-card border border-grid-line-bright p-4 sm:p-6 relative overflow-hidden before:content-[''] before:absolute before:top-0 before:left-0 before:right-0 before:h-0.5 before:bg-gradient-to-r before:from-transparent before:via-accent-dim before:to-transparent">
-				<div class="text-2xl sm:text-4xl font-bold text-white/[0.92] leading-none">{formatNumber(totals.total_input)}</div>
+			<div
+				class="bg-bg-card border border-grid-line-bright p-4 sm:p-6 relative overflow-hidden before:content-[''] before:absolute before:top-0 before:left-0 before:right-0 before:h-0.5 before:bg-gradient-to-r before:from-transparent before:via-accent-dim before:to-transparent"
+			>
+				<div class="text-2xl sm:text-4xl font-bold text-white/[0.92] leading-none">
+					{formatNumber(totals.total_input)}
+				</div>
 				<div class="text-xs text-text-tertiary uppercase tracking-widest mt-2">INPUT TOKENS</div>
 			</div>
-			<div class="bg-bg-card border border-grid-line-bright p-4 sm:p-6 relative overflow-hidden before:content-[''] before:absolute before:top-0 before:left-0 before:right-0 before:h-0.5 before:bg-gradient-to-r before:from-transparent before:via-accent-dim before:to-transparent">
-				<div class="text-2xl sm:text-4xl font-bold text-white/[0.78] leading-none">{formatNumber(totals.total_output)}</div>
+			<div
+				class="bg-bg-card border border-grid-line-bright p-4 sm:p-6 relative overflow-hidden before:content-[''] before:absolute before:top-0 before:left-0 before:right-0 before:h-0.5 before:bg-gradient-to-r before:from-transparent before:via-accent-dim before:to-transparent"
+			>
+				<div class="text-2xl sm:text-4xl font-bold text-white/[0.78] leading-none">
+					{formatNumber(totals.total_output)}
+				</div>
 				<div class="text-xs text-text-tertiary uppercase tracking-widest mt-2">OUTPUT TOKENS</div>
 			</div>
 		</svelte:boundary>
@@ -141,7 +192,9 @@
 	<!-- Charts Row 1 -->
 	<section class="grid grid-cols-1 gap-4 mb-6 lg:grid-cols-[2fr_1fr]">
 		<div class="bg-bg-card border border-grid-line-bright p-4 sm:p-6">
-			<h2 class="mb-4 text-xs font-medium text-text-secondary uppercase tracking-[0.15em]">COST OVER TIME</h2>
+			<h2 class="mb-4 text-xs font-medium text-text-secondary uppercase tracking-[0.15em]">
+				COST OVER TIME
+			</h2>
 			<svelte:boundary>
 				{#snippet pending()}
 					{@render loadingState()}
@@ -155,7 +208,9 @@
 			</svelte:boundary>
 		</div>
 		<div class="bg-bg-card border border-grid-line-bright p-4 sm:p-6">
-			<h2 class="mb-4 text-xs font-medium text-text-secondary uppercase tracking-[0.15em]">COST BY MODEL</h2>
+			<h2 class="mb-4 text-xs font-medium text-text-secondary uppercase tracking-[0.15em]">
+				COST BY MODEL
+			</h2>
 			<svelte:boundary>
 				{#snippet pending()}
 					{@render loadingState()}
@@ -175,7 +230,9 @@
 	<!-- Charts Row 2 -->
 	<section class="grid grid-cols-1 gap-4 mb-6 lg:grid-cols-[2fr_1fr]">
 		<div class="bg-bg-card border border-grid-line-bright p-4 sm:p-6">
-			<h2 class="mb-4 text-xs font-medium text-text-secondary uppercase tracking-[0.15em]">TOKEN FLOW</h2>
+			<h2 class="mb-4 text-xs font-medium text-text-secondary uppercase tracking-[0.15em]">
+				TOKEN FLOW
+			</h2>
 			<svelte:boundary>
 				{#snippet pending()}
 					{@render loadingState()}
@@ -193,7 +250,9 @@
 			</svelte:boundary>
 		</div>
 		<div class="bg-bg-card border border-grid-line-bright p-4 sm:p-6">
-			<h2 class="mb-4 text-xs font-medium text-text-secondary uppercase tracking-[0.15em]">COST BY AGENT</h2>
+			<h2 class="mb-4 text-xs font-medium text-text-secondary uppercase tracking-[0.15em]">
+				COST BY AGENT
+			</h2>
 			<svelte:boundary>
 				{#snippet pending()}
 					{@render loadingState()}
@@ -216,11 +275,15 @@
 		<div class="bg-bg-card border border-grid-line-bright p-4 w-full sm:p-6">
 			<svelte:boundary>
 				{#snippet pending()}
-					<h2 class="mb-4 text-xs font-medium text-text-secondary uppercase tracking-[0.15em]">TOKENS EXPLORER</h2>
+					<h2 class="mb-4 text-xs font-medium text-text-secondary uppercase tracking-[0.15em]">
+						TOKENS EXPLORER
+					</h2>
 					{@render loadingState()}
 				{/snippet}
 				{#snippet failed(error, retry)}
-					<h2 class="mb-4 text-xs font-medium text-text-secondary uppercase tracking-[0.15em]">TOKENS EXPLORER</h2>
+					<h2 class="mb-4 text-xs font-medium text-text-secondary uppercase tracking-[0.15em]">
+						TOKENS EXPLORER
+					</h2>
 					{@render errorState(error, retry)}
 				{/snippet}
 				{@const tokensData = await getTokensData()}
@@ -231,7 +294,9 @@
 
 	<!-- Model Performance Table -->
 	<section class="bg-bg-card border border-grid-line-bright p-4 mb-6 sm:p-6">
-		<h2 class="mb-4 text-xs font-medium text-text-secondary uppercase tracking-[0.15em]">MODEL PERFORMANCE</h2>
+		<h2 class="mb-4 text-xs font-medium text-text-secondary uppercase tracking-[0.15em]">
+			MODEL PERFORMANCE
+		</h2>
 		<svelte:boundary>
 			{#snippet pending()}
 				{@render loadingState()}
@@ -258,7 +323,10 @@
 							{@const avgDuration = modelPerformance.find((d) => d.model_id === model.model_id)}
 							<tr>
 								<td class="font-mono text-sm">
-									<span class="inline-block bg-transparent border border-accent-dim text-text-secondary px-1.5 py-0.5 text-[0.65rem] mr-2 uppercase">{model.provider_id}</span>
+									<span
+										class="inline-block bg-transparent border border-accent-dim text-text-secondary px-1.5 py-0.5 text-[0.65rem] mr-2 uppercase"
+										>{model.provider_id}</span
+									>
 									{getModelShortName(model.model_id)}
 								</td>
 								<td>{model.request_count.toLocaleString()}</td>
@@ -276,7 +344,9 @@
 
 	<!-- Recent Activity -->
 	<section class="bg-bg-card border border-grid-line-bright p-4 mb-6 sm:p-6">
-		<h2 class="mb-4 text-xs font-medium text-text-secondary uppercase tracking-[0.15em]">RECENT ACTIVITY</h2>
+		<h2 class="mb-4 text-xs font-medium text-text-secondary uppercase tracking-[0.15em]">
+			RECENT ACTIVITY
+		</h2>
 		<svelte:boundary>
 			{#snippet pending()}
 				{@render loadingState()}
@@ -320,7 +390,9 @@
 	</section>
 
 	<!-- Footer -->
-	<footer class="flex flex-col gap-3 py-6 border-t border-grid-line-bright text-text-tertiary text-xs sm:flex-row sm:justify-between sm:items-center">
+	<footer
+		class="flex flex-col gap-3 py-6 border-t border-grid-line-bright text-text-tertiary text-xs sm:flex-row sm:justify-between sm:items-center"
+	>
 		<svelte:boundary>
 			{#snippet pending()}
 				<div class="flex flex-wrap gap-x-2 gap-y-1">

@@ -10,7 +10,13 @@
 		gradientId?: string;
 	}
 
-	let { data, width = 500, height = 200, color = '#3b82f6', gradientId = 'areaGrad' }: Props = $props();
+	let {
+		data,
+		width = 500,
+		height = 200,
+		color = '#3b82f6',
+		gradientId = 'areaGrad'
+	}: Props = $props();
 
 	let svgElement: SVGSVGElement;
 	let containerEl: HTMLDivElement;
@@ -60,8 +66,16 @@
 			.attr('y1', '0%')
 			.attr('x2', '0%')
 			.attr('y2', '100%');
-		gradient.append('stop').attr('offset', '0%').attr('stop-color', color).attr('stop-opacity', 0.4);
-		gradient.append('stop').attr('offset', '100%').attr('stop-color', color).attr('stop-opacity', 0);
+		gradient
+			.append('stop')
+			.attr('offset', '0%')
+			.attr('stop-color', color)
+			.attr('stop-opacity', 0.4);
+		gradient
+			.append('stop')
+			.attr('offset', '100%')
+			.attr('stop-color', color)
+			.attr('stop-opacity', 0);
 
 		// No glow filter (clean theme)
 
@@ -84,7 +98,12 @@
 		// Grid lines (y-axis)
 		g.append('g')
 			.attr('class', 'grid')
-			.call(d3.axisLeft(y).tickSize(-innerWidth).tickFormat(() => ''))
+			.call(
+				d3
+					.axisLeft(y)
+					.tickSize(-innerWidth)
+					.tickFormat(() => '')
+			)
 			.selectAll('line')
 			.attr('stroke', 'rgba(255, 255, 255, 0.06)');
 
@@ -172,7 +191,12 @@
 		g.append('g')
 			.attr('class', 'grid')
 			.attr('transform', `translate(0,${innerHeight})`)
-			.call(d3.axisBottom(x).tickSize(-innerHeight).tickFormat(() => ''))
+			.call(
+				d3
+					.axisBottom(x)
+					.tickSize(-innerHeight)
+					.tickFormat(() => '')
+			)
 			.selectAll('line')
 			.attr('stroke', 'rgba(255, 255, 255, 0.06)');
 
@@ -235,9 +259,7 @@
 
 		g.append('g')
 			.attr('class', 'axis')
-			.call(
-				d3.axisLeft(y).ticks(5).tickFormat(d3.format('$.2s'))
-			)
+			.call(d3.axisLeft(y).ticks(5).tickFormat(d3.format('$.2s')))
 			.selectAll('text')
 			.attr('fill', 'rgba(136, 136, 160, 0.8)')
 			.attr('font-size', '10px');
@@ -301,8 +323,7 @@
 				const i = bisectDate(parsedData, x0, 1);
 				const a = parsedData[i - 1];
 				const b = parsedData[i] ?? a;
-				const d =
-					x0.getTime() - a.date.getTime() > b.date.getTime() - x0.getTime() ? b : a;
+				const d = x0.getTime() - a.date.getTime() > b.date.getTime() - x0.getTime() ? b : a;
 
 				const cx = x(d.date);
 				const cy = y(d.value);

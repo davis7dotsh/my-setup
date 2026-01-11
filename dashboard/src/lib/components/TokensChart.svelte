@@ -55,14 +55,42 @@
 		const defs = svg.append('defs');
 
 		// Input gradient (cyan)
-		const inputGrad = defs.append('linearGradient').attr('id', 'inputGrad').attr('x1', '0%').attr('y1', '0%').attr('x2', '0%').attr('y2', '100%');
-		inputGrad.append('stop').attr('offset', '0%').attr('stop-color', '#3b82f6').attr('stop-opacity', 0.35);
-		inputGrad.append('stop').attr('offset', '100%').attr('stop-color', '#3b82f6').attr('stop-opacity', 0.03);
+		const inputGrad = defs
+			.append('linearGradient')
+			.attr('id', 'inputGrad')
+			.attr('x1', '0%')
+			.attr('y1', '0%')
+			.attr('x2', '0%')
+			.attr('y2', '100%');
+		inputGrad
+			.append('stop')
+			.attr('offset', '0%')
+			.attr('stop-color', '#3b82f6')
+			.attr('stop-opacity', 0.35);
+		inputGrad
+			.append('stop')
+			.attr('offset', '100%')
+			.attr('stop-color', '#3b82f6')
+			.attr('stop-opacity', 0.03);
 
 		// Output gradient (neutral)
-		const outputGrad = defs.append('linearGradient').attr('id', 'outputGrad').attr('x1', '0%').attr('y1', '0%').attr('x2', '0%').attr('y2', '100%');
-		outputGrad.append('stop').attr('offset', '0%').attr('stop-color', '#e5e7eb').attr('stop-opacity', 0.25);
-		outputGrad.append('stop').attr('offset', '100%').attr('stop-color', '#e5e7eb').attr('stop-opacity', 0.02);
+		const outputGrad = defs
+			.append('linearGradient')
+			.attr('id', 'outputGrad')
+			.attr('x1', '0%')
+			.attr('y1', '0%')
+			.attr('x2', '0%')
+			.attr('y2', '100%');
+		outputGrad
+			.append('stop')
+			.attr('offset', '0%')
+			.attr('stop-color', '#e5e7eb')
+			.attr('stop-opacity', 0.25);
+		outputGrad
+			.append('stop')
+			.attr('offset', '100%')
+			.attr('stop-color', '#e5e7eb')
+			.attr('stop-opacity', 0.02);
 
 		// No glow filters (clean theme)
 
@@ -83,16 +111,47 @@
 		// Grid
 		g.append('g')
 			.attr('class', 'grid')
-			.call(d3.axisLeft(y).tickSize(-innerWidth).tickFormat(() => ''))
+			.call(
+				d3
+					.axisLeft(y)
+					.tickSize(-innerWidth)
+					.tickFormat(() => '')
+			)
 			.selectAll('line')
 			.attr('stroke', 'rgba(255, 255, 255, 0.06)');
 
 		// Legend (always show)
 		const legend = g.append('g').attr('transform', `translate(${innerWidth - 100}, -15)`);
-		legend.append('line').attr('x1', 0).attr('y1', 5).attr('x2', 20).attr('y2', 5).attr('stroke', '#3b82f6').attr('stroke-width', 2);
-		legend.append('text').attr('x', 25).attr('y', 8).attr('fill', 'rgba(136, 136, 160, 0.8)').attr('font-size', '10px').text('Input');
-		legend.append('line').attr('x1', 60).attr('y1', 5).attr('x2', 80).attr('y2', 5).attr('stroke', '#e5e7eb').attr('stroke-width', 2);
-		legend.append('text').attr('x', 85).attr('y', 8).attr('fill', 'rgba(136, 136, 160, 0.8)').attr('font-size', '10px').text('Output');
+		legend
+			.append('line')
+			.attr('x1', 0)
+			.attr('y1', 5)
+			.attr('x2', 20)
+			.attr('y2', 5)
+			.attr('stroke', '#3b82f6')
+			.attr('stroke-width', 2);
+		legend
+			.append('text')
+			.attr('x', 25)
+			.attr('y', 8)
+			.attr('fill', 'rgba(136, 136, 160, 0.8)')
+			.attr('font-size', '10px')
+			.text('Input');
+		legend
+			.append('line')
+			.attr('x1', 60)
+			.attr('y1', 5)
+			.attr('x2', 80)
+			.attr('y2', 5)
+			.attr('stroke', '#e5e7eb')
+			.attr('stroke-width', 2);
+		legend
+			.append('text')
+			.attr('x', 85)
+			.attr('y', 8)
+			.attr('fill', 'rgba(136, 136, 160, 0.8)')
+			.attr('font-size', '10px')
+			.text('Output');
 
 		// Handle single data point - show as bars
 		if (parsedData.length === 1) {
@@ -342,13 +401,15 @@
 			.duration(250)
 			.attr('r', 3);
 
-
 		// Axes
 		g.append('g')
 			.attr('class', 'axis')
 			.attr('transform', `translate(0,${innerHeight})`)
 			.call(
-				d3.axisBottom(x).ticks(5).tickFormat((d) => d3.timeFormat('%b %d')(d as Date))
+				d3
+					.axisBottom(x)
+					.ticks(5)
+					.tickFormat((d) => d3.timeFormat('%b %d')(d as Date))
 			)
 			.selectAll('text')
 			.attr('fill', 'rgba(136, 136, 160, 0.8)')
@@ -410,8 +471,7 @@
 				const i = bisectDate(parsedData, x0, 1);
 				const a = parsedData[i - 1];
 				const b = parsedData[i] ?? a;
-				const d =
-					x0.getTime() - a.date.getTime() > b.date.getTime() - x0.getTime() ? b : a;
+				const d = x0.getTime() - a.date.getTime() > b.date.getTime() - x0.getTime() ? b : a;
 
 				const cx = x(d.date);
 				const cyInput = y(d.input);

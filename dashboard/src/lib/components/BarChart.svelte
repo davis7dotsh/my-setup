@@ -74,7 +74,12 @@
 			// Grid
 			g.append('g')
 				.attr('class', 'grid')
-				.call(d3.axisBottom(x).tickSize(innerHeight).tickFormat(() => ''))
+				.call(
+					d3
+						.axisBottom(x)
+						.tickSize(innerHeight)
+						.tickFormat(() => '')
+				)
 				.attr('transform', `translate(0, 0)`)
 				.selectAll('line')
 				.attr('stroke', 'rgba(255, 255, 255, 0.06)');
@@ -163,7 +168,12 @@
 			// Grid
 			g.append('g')
 				.attr('class', 'grid')
-				.call(d3.axisLeft(y).tickSize(-innerWidth).tickFormat(() => ''))
+				.call(
+					d3
+						.axisLeft(y)
+						.tickSize(-innerWidth)
+						.tickFormat(() => '')
+				)
 				.selectAll('line')
 				.attr('stroke', 'rgba(255, 255, 255, 0.06)');
 

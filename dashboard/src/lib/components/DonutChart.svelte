@@ -57,7 +57,10 @@
 			.sort(null)
 			.padAngle(0.02);
 
-		const arc = d3.arc<d3.PieArcDatum<{ label: string; value: number }>>().innerRadius(innerRadius).outerRadius(radius);
+		const arc = d3
+			.arc<d3.PieArcDatum<{ label: string; value: number }>>()
+			.innerRadius(innerRadius)
+			.outerRadius(radius);
 
 		const arcHover = d3
 			.arc<d3.PieArcDatum<{ label: string; value: number }>>()
@@ -91,12 +94,7 @@
 			};
 		}
 
-		const arcs = g
-			.selectAll('.arc')
-			.data(pieData)
-			.enter()
-			.append('g')
-			.attr('class', 'arc');
+		const arcs = g.selectAll('.arc').data(pieData).enter().append('g').attr('class', 'arc');
 
 		const paths = arcs
 			.append('path')
@@ -169,9 +167,7 @@
 		resetCenter();
 
 		// Legend
-		const legend = svg
-			.append('g')
-			.attr('transform', `translate(${actualWidth - 120}, 20)`);
+		const legend = svg.append('g').attr('transform', `translate(${actualWidth - 120}, 20)`);
 
 		const legendItems = legend
 			.selectAll<SVGGElement, (typeof data)[number]>('.legend-item')
@@ -237,7 +233,7 @@
 			.attr('y', 10)
 			.attr('fill', 'rgba(136, 136, 160, 0.8)')
 			.attr('font-size', '9px')
-			.text((d) => d.label.length > 12 ? d.label.slice(0, 12) + '...' : d.label);
+			.text((d) => (d.label.length > 12 ? d.label.slice(0, 12) + '...' : d.label));
 	}
 
 	onMount(() => {

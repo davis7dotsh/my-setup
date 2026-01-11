@@ -177,14 +177,17 @@
 
 		g.append('g')
 			.attr('class', 'grid')
-			.call(d3.axisLeft(y).tickSize(-innerWidth).tickFormat(() => ''))
+			.call(
+				d3
+					.axisLeft(y)
+					.tickSize(-innerWidth)
+					.tickFormat(() => '')
+			)
 			.selectAll('line')
 			.attr('stroke', 'rgba(255, 255, 255, 0.06)');
 
 		// X scale
-		let x:
-			| d3.ScaleLinear<number, number, never>
-			| d3.ScaleTime<number, number, never>;
+		let x: d3.ScaleLinear<number, number, never> | d3.ScaleTime<number, number, never>;
 
 		if (xType === 'hour') {
 			x = d3.scaleLinear().domain([0, 23]).range([0, innerWidth]);
@@ -197,32 +200,32 @@
 		const areaInput =
 			xType === 'hour'
 				? d3
-					.area<Point>()
-					.x((d) => (x as d3.ScaleLinear<number, number>)(d.x as number))
-					.y0(innerHeight)
-					.y1((d) => y(d.input))
-					.curve(d3.curveMonotoneX)
+						.area<Point>()
+						.x((d) => (x as d3.ScaleLinear<number, number>)(d.x as number))
+						.y0(innerHeight)
+						.y1((d) => y(d.input))
+						.curve(d3.curveMonotoneX)
 				: d3
-					.area<Point>()
-					.x((d) => (x as d3.ScaleTime<number, number>)(d.x as Date))
-					.y0(innerHeight)
-					.y1((d) => y(d.input))
-					.curve(d3.curveMonotoneX);
+						.area<Point>()
+						.x((d) => (x as d3.ScaleTime<number, number>)(d.x as Date))
+						.y0(innerHeight)
+						.y1((d) => y(d.input))
+						.curve(d3.curveMonotoneX);
 
 		const areaOutput =
 			xType === 'hour'
 				? d3
-					.area<Point>()
-					.x((d) => (x as d3.ScaleLinear<number, number>)(d.x as number))
-					.y0(innerHeight)
-					.y1((d) => y(d.output))
-					.curve(d3.curveMonotoneX)
+						.area<Point>()
+						.x((d) => (x as d3.ScaleLinear<number, number>)(d.x as number))
+						.y0(innerHeight)
+						.y1((d) => y(d.output))
+						.curve(d3.curveMonotoneX)
 				: d3
-					.area<Point>()
-					.x((d) => (x as d3.ScaleTime<number, number>)(d.x as Date))
-					.y0(innerHeight)
-					.y1((d) => y(d.output))
-					.curve(d3.curveMonotoneX);
+						.area<Point>()
+						.x((d) => (x as d3.ScaleTime<number, number>)(d.x as Date))
+						.y0(innerHeight)
+						.y1((d) => y(d.output))
+						.curve(d3.curveMonotoneX);
 
 		// Background areas
 		g.append('path')
@@ -247,28 +250,28 @@
 		const lineInput =
 			xType === 'hour'
 				? d3
-					.line<Point>()
-					.x((d) => (x as d3.ScaleLinear<number, number>)(d.x as number))
-					.y((d) => y(d.input))
-					.curve(d3.curveMonotoneX)
+						.line<Point>()
+						.x((d) => (x as d3.ScaleLinear<number, number>)(d.x as number))
+						.y((d) => y(d.input))
+						.curve(d3.curveMonotoneX)
 				: d3
-					.line<Point>()
-					.x((d) => (x as d3.ScaleTime<number, number>)(d.x as Date))
-					.y((d) => y(d.input))
-					.curve(d3.curveMonotoneX);
+						.line<Point>()
+						.x((d) => (x as d3.ScaleTime<number, number>)(d.x as Date))
+						.y((d) => y(d.input))
+						.curve(d3.curveMonotoneX);
 
 		const lineOutput =
 			xType === 'hour'
 				? d3
-					.line<Point>()
-					.x((d) => (x as d3.ScaleLinear<number, number>)(d.x as number))
-					.y((d) => y(d.output))
-					.curve(d3.curveMonotoneX)
+						.line<Point>()
+						.x((d) => (x as d3.ScaleLinear<number, number>)(d.x as number))
+						.y((d) => y(d.output))
+						.curve(d3.curveMonotoneX)
 				: d3
-					.line<Point>()
-					.x((d) => (x as d3.ScaleTime<number, number>)(d.x as Date))
-					.y((d) => y(d.output))
-					.curve(d3.curveMonotoneX);
+						.line<Point>()
+						.x((d) => (x as d3.ScaleTime<number, number>)(d.x as Date))
+						.y((d) => y(d.output))
+						.curve(d3.curveMonotoneX);
 
 		const pathInput = g
 			.append('path')
@@ -306,7 +309,10 @@
 			.attr('stroke-dashoffset', 0);
 
 		// Axes
-		const xAxis = g.append('g').attr('class', 'axis').attr('transform', `translate(0,${innerHeight})`);
+		const xAxis = g
+			.append('g')
+			.attr('class', 'axis')
+			.attr('transform', `translate(0,${innerHeight})`);
 		if (xType === 'hour') {
 			xAxis
 				.call(
@@ -349,10 +355,36 @@
 
 		// Legend
 		const legend = g.append('g').attr('transform', `translate(${innerWidth - 140}, -16)`);
-		legend.append('line').attr('x1', 0).attr('y1', 5).attr('x2', 16).attr('y2', 5).attr('stroke', '#3b82f6').attr('stroke-width', 2);
-		legend.append('text').attr('x', 20).attr('y', 8).attr('fill', 'rgba(136, 136, 160, 0.8)').attr('font-size', '10px').text('In');
-		legend.append('line').attr('x1', 58).attr('y1', 5).attr('x2', 74).attr('y2', 5).attr('stroke', '#e5e7eb').attr('stroke-width', 2);
-		legend.append('text').attr('x', 78).attr('y', 8).attr('fill', 'rgba(136, 136, 160, 0.8)').attr('font-size', '10px').text('Out');
+		legend
+			.append('line')
+			.attr('x1', 0)
+			.attr('y1', 5)
+			.attr('x2', 16)
+			.attr('y2', 5)
+			.attr('stroke', '#3b82f6')
+			.attr('stroke-width', 2);
+		legend
+			.append('text')
+			.attr('x', 20)
+			.attr('y', 8)
+			.attr('fill', 'rgba(136, 136, 160, 0.8)')
+			.attr('font-size', '10px')
+			.text('In');
+		legend
+			.append('line')
+			.attr('x1', 58)
+			.attr('y1', 5)
+			.attr('x2', 74)
+			.attr('y2', 5)
+			.attr('stroke', '#e5e7eb')
+			.attr('stroke-width', 2);
+		legend
+			.append('text')
+			.attr('x', 78)
+			.attr('y', 8)
+			.attr('fill', 'rgba(136, 136, 160, 0.8)')
+			.attr('font-size', '10px')
+			.text('Out');
 
 		// Hover focus + tooltip
 		const focus = g.append('g').style('display', 'none');
@@ -485,12 +517,17 @@
 </script>
 
 <div class="flex items-baseline justify-between gap-4 mb-3">
-	<h2 class="m-0 text-xs font-medium text-text-secondary uppercase tracking-[0.15em]">TOKENS OVER TIME</h2>
+	<h2 class="m-0 text-xs font-medium text-text-secondary uppercase tracking-[0.15em]">
+		TOKENS OVER TIME
+	</h2>
 	<div class="flex gap-1.5">
 		{#each ['day', 'week', 'month', 'year'] as r}
 			<button
 				type="button"
-				class="px-2 py-1 text-[0.65rem] tracking-[0.1em] uppercase border border-grid-line-bright bg-transparent text-text-tertiary cursor-pointer hover:text-text-secondary {range === (r as Range) ? '!text-text-primary !border-[rgba(59,130,246,0.6)] !bg-[rgba(59,130,246,0.12)]' : ''}"
+				class="px-2 py-1 text-[0.65rem] tracking-[0.1em] uppercase border border-grid-line-bright bg-transparent text-text-tertiary cursor-pointer hover:text-text-secondary {range ===
+				(r as Range)
+					? '!text-text-primary !border-[rgba(59,130,246,0.6)] !bg-[rgba(59,130,246,0.12)]'
+					: ''}"
 				onclick={() => setRange(r as Range)}
 			>
 				{labelForRange(r as Range)}
