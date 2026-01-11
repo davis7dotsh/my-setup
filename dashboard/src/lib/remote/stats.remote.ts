@@ -97,7 +97,9 @@ export const getTokensData = query(async () => {
       tokens_output: sql<number>`COALESCE(SUM(${dailySummary.tokensOutput}), 0)`,
     })
     .from(dailySummary)
-    .where(sql`${dailySummary.date}::date >= CURRENT_DATE - INTERVAL '365 days'`)
+    .where(
+      sql`${dailySummary.date}::date >= CURRENT_DATE - INTERVAL '365 days'`
+    )
     .groupBy(dailySummary.date)
     .orderBy(dailySummary.date);
 

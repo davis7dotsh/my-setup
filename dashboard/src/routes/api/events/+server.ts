@@ -62,78 +62,19 @@ export const POST: RequestHandler = async ({ request }) => {
     const timestamp = event.createdAt ? new Date(event.createdAt) : now;
     const dateStr = timestamp.toISOString().split("T")[0];
 
-    // Check if record exists
+    // Fetch existing record first (if any)
     const existing = await db
       .select()
       .from(requests)
       .where(eq(requests.messageId, event.messageId))
       .limit(1);
 
-    if (existing.length > 0) {
-      const existingRecord = existing[0];
+    const existingRecord = existing[0] ?? null;
 
-      // Calculate deltas for summary updates
-      const deltaInput = event.tokens.input - (existingRecord.tokensInput || 0);
-      const deltaOutput =
-        event.tokens.output - (existingRecord.tokensOutput || 0);
-      const deltaReasoning =
-        event.tokens.reasoning - (existingRecord.tokensReasoning || 0);
-      const deltaCacheRead =
-        event.tokens.cache.read - (existingRecord.tokensCacheRead || 0);
-      const deltaCacheWrite =
-        event.tokens.cache.write - (existingRecord.tokensCacheWrite || 0);
-      const deltaCost = event.cost - (existingRecord.costUsd || 0);
-
-      // Update existing request
-      await db
-        .update(requests)
-        .set({
-          tokensInput: event.tokens.input,
-          tokensOutput: event.tokens.output,
-          tokensReasoning: event.tokens.reasoning,
-          tokensCacheRead: event.tokens.cache.read,
-          tokensCacheWrite: event.tokens.cache.write,
-          costUsd: event.cost,
-          durationMs: event.durationMs,
-          finishReason: event.finishReason,
-          completedAt: event.completedAt ? new Date(event.completedAt) : null,
-        })
-        .where(eq(requests.messageId, event.messageId));
-
-      if (deltaCost !== 0 || deltaInput !== 0 || deltaOutput !== 0) {
-        // Update daily summary
-        await db
-          .update(dailySummary)
-          .set({
-            tokensInput: sql`${dailySummary.tokensInput} + ${deltaInput}`,
-            tokensOutput: sql`${dailySummary.tokensOutput} + ${deltaOutput}`,
-            tokensReasoning: sql`${dailySummary.tokensReasoning} + ${deltaReasoning}`,
-            tokensCacheRead: sql`${dailySummary.tokensCacheRead} + ${deltaCacheRead}`,
-            tokensCacheWrite: sql`${dailySummary.tokensCacheWrite} + ${deltaCacheWrite}`,
-            costUsd: sql`${dailySummary.costUsd} + ${deltaCost}`,
-          })
-          .where(
-            and(
-              eq(dailySummary.date, dateStr),
-              eq(dailySummary.providerId, event.providerId),
-              eq(dailySummary.modelId, event.modelId)
-            )
-          );
-
-        // Update session
-        await db
-          .update(sessions)
-          .set({
-            totalCostUsd: sql`${sessions.totalCostUsd} + ${deltaCost}`,
-            totalTokensInput: sql`${sessions.totalTokensInput} + ${deltaInput}`,
-            totalTokensOutput: sql`${sessions.totalTokensOutput} + ${deltaOutput}`,
-            lastRequestAt: timestamp,
-          })
-          .where(eq(sessions.sessionId, event.sessionId));
-      }
-    } else {
-      // Insert new request
-      await db.insert(requests).values({
+    // Upsert request - handles race conditions atomically
+    await db
+      .insert(requests)
+      .values({
         messageId: event.messageId,
         sessionId: event.sessionId,
         providerId: event.providerId,
@@ -150,9 +91,24 @@ export const POST: RequestHandler = async ({ request }) => {
         workingDir: event.workingDir,
         createdAt: timestamp,
         completedAt: event.completedAt ? new Date(event.completedAt) : null,
+      })
+      .onConflictDoUpdate({
+        target: requests.messageId,
+        set: {
+          tokensInput: event.tokens.input,
+          tokensOutput: event.tokens.output,
+          tokensReasoning: event.tokens.reasoning,
+          tokensCacheRead: event.tokens.cache.read,
+          tokensCacheWrite: event.tokens.cache.write,
+          costUsd: event.cost,
+          durationMs: event.durationMs,
+          finishReason: event.finishReason,
+          completedAt: event.completedAt ? new Date(event.completedAt) : null,
+        },
       });
 
-      // Upsert session
+    if (!existingRecord) {
+      // New record - add full values to summaries
       await db
         .insert(sessions)
         .values({
@@ -176,7 +132,6 @@ export const POST: RequestHandler = async ({ request }) => {
           },
         });
 
-      // Upsert daily summary
       await db
         .insert(dailySummary)
         .values({
@@ -207,6 +162,44 @@ export const POST: RequestHandler = async ({ request }) => {
             costUsd: sql`${dailySummary.costUsd} + ${event.cost}`,
           },
         });
+    } else {
+      // Updated record - apply deltas to summaries
+      const deltaInput = event.tokens.input - (existingRecord.tokensInput || 0);
+      const deltaOutput = event.tokens.output - (existingRecord.tokensOutput || 0);
+      const deltaReasoning = event.tokens.reasoning - (existingRecord.tokensReasoning || 0);
+      const deltaCacheRead = event.tokens.cache.read - (existingRecord.tokensCacheRead || 0);
+      const deltaCacheWrite = event.tokens.cache.write - (existingRecord.tokensCacheWrite || 0);
+      const deltaCost = event.cost - (existingRecord.costUsd || 0);
+
+      if (deltaCost !== 0 || deltaInput !== 0 || deltaOutput !== 0) {
+        await db
+          .update(dailySummary)
+          .set({
+            tokensInput: sql`${dailySummary.tokensInput} + ${deltaInput}`,
+            tokensOutput: sql`${dailySummary.tokensOutput} + ${deltaOutput}`,
+            tokensReasoning: sql`${dailySummary.tokensReasoning} + ${deltaReasoning}`,
+            tokensCacheRead: sql`${dailySummary.tokensCacheRead} + ${deltaCacheRead}`,
+            tokensCacheWrite: sql`${dailySummary.tokensCacheWrite} + ${deltaCacheWrite}`,
+            costUsd: sql`${dailySummary.costUsd} + ${deltaCost}`,
+          })
+          .where(
+            and(
+              eq(dailySummary.date, dateStr),
+              eq(dailySummary.providerId, event.providerId),
+              eq(dailySummary.modelId, event.modelId)
+            )
+          );
+
+        await db
+          .update(sessions)
+          .set({
+            totalCostUsd: sql`${sessions.totalCostUsd} + ${deltaCost}`,
+            totalTokensInput: sql`${sessions.totalTokensInput} + ${deltaInput}`,
+            totalTokensOutput: sql`${sessions.totalTokensOutput} + ${deltaOutput}`,
+            lastRequestAt: timestamp,
+          })
+          .where(eq(sessions.sessionId, event.sessionId));
+      }
     }
 
     return json({ success: true });

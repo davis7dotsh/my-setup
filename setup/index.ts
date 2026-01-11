@@ -1,69 +1,89 @@
 import { join } from "path";
 import { homedir } from "os";
+import { lstatSync } from "fs";
 import { $ } from "bun";
+import { program } from "commander";
+import { input, confirm } from "@inquirer/prompts";
 
 const OPENCODE_CONFIG_DIR = join(homedir(), ".config", "opencode");
-const SOURCE_DIR = join(import.meta.dir, "..", "opencode");
+const OPENCODE_SOURCE_DIR = join(import.meta.dir, "..", "opencode");
 
-async function prompt(question: string): Promise<string> {
-  process.stdout.write(question);
-  for await (const line of console) {
-    return line.trim();
+function pathExists(path: string): boolean {
+  try {
+    lstatSync(path);
+    return true;
+  } catch {
+    return false;
   }
-  return "";
 }
 
-async function main() {
-  console.log("\n=== OpenCode Setup ===\n");
+program
+  .name("setup")
+  .description("Setup opencode configuration by copying files to ~/.config/opencode")
+  .action(async () => {
+    console.log("\n=== OpenCode Setup ===\n");
 
-  // Check if config directory exists
-  const configDir = Bun.file(OPENCODE_CONFIG_DIR);
-  if (await configDir.exists()) {
-    console.log(`Found existing config at: ${OPENCODE_CONFIG_DIR}`);
-    const confirm = await prompt(
-      "This will DELETE the existing directory. Continue? (y/N): "
-    );
+    // Check if config directory/symlink exists
+    if (pathExists(OPENCODE_CONFIG_DIR)) {
+      console.log(`Found existing config at: ${OPENCODE_CONFIG_DIR}`);
+      const shouldContinue = await confirm({
+        message: "This will DELETE the existing directory/symlink. Continue?",
+        default: false,
+      });
 
-    if (confirm.toLowerCase() !== "y") {
-      console.log("Aborted.");
-      process.exit(0);
+      if (!shouldContinue) {
+        console.log("Aborted.");
+        process.exit(0);
+      }
+
+      console.log("Removing existing config...");
+      await $`rm -rf ${OPENCODE_CONFIG_DIR}`.quiet();
     }
 
-    console.log("Removing existing config directory...");
-    await $`rm -rf ${OPENCODE_CONFIG_DIR}`.quiet();
-  }
+    // Ensure parent directory exists
+    const parentDir = join(homedir(), ".config");
+    await $`mkdir -p ${parentDir}`.quiet();
 
-  // Ensure parent directory exists
-  const parentDir = join(homedir(), ".config");
-  await $`mkdir -p ${parentDir}`.quiet();
+    // Copy all files from opencode directory (excluding .gitignore, bun.lock, package.json)
+    console.log(`Copying files from: ${OPENCODE_SOURCE_DIR}`);
+    console.log(`To: ${OPENCODE_CONFIG_DIR}`);
+    
+    await $`mkdir -p ${OPENCODE_CONFIG_DIR}`.quiet();
+    
+    // Copy directories
+    await $`cp -r ${join(OPENCODE_SOURCE_DIR, "commands")} ${OPENCODE_CONFIG_DIR}/`.quiet();
+    await $`cp -r ${join(OPENCODE_SOURCE_DIR, "config")}/* ${OPENCODE_CONFIG_DIR}/`.quiet();
+    await $`cp -r ${join(OPENCODE_SOURCE_DIR, "plugin")} ${OPENCODE_CONFIG_DIR}/`.quiet();
+    
+    console.log("Files copied successfully!");
 
-  // Create symlink
-  console.log(`Creating symlink: ${OPENCODE_CONFIG_DIR} -> ${SOURCE_DIR}`);
-  await $`ln -s ${SOURCE_DIR} ${OPENCODE_CONFIG_DIR}`.quiet();
-  console.log("Symlink created successfully!");
+    // Ask for API configuration
+    console.log("\n=== Token Tracker API Configuration ===\n");
 
-  // Ask for API configuration
-  console.log("\n=== Token Tracker API Configuration ===\n");
+    const apiUrl = await input({
+      message: "Enter the API URL for sending events:",
+    });
 
-  const apiUrl = await prompt("Enter the API URL for sending events: ");
-  const apiKey = await prompt("Enter the API key: ");
+    const apiKey = await input({
+      message: "Enter the API key:",
+    });
 
-  if (apiUrl && apiKey) {
-    const config = {
-      apiUrl,
-      apiKey,
-    };
+    if (apiUrl && apiKey) {
+      const config = {
+        apiUrl,
+        apiKey,
+      };
 
-    const configPath = join(SOURCE_DIR, "token-tracker.json");
-    await Bun.write(configPath, JSON.stringify(config, null, 2));
-    console.log(`\nConfig saved to: ${configPath}`);
-  } else {
-    console.log(
-      "\nSkipping API config (no URL or key provided). Token tracking disabled."
-    );
-  }
+      const configPath = join(OPENCODE_CONFIG_DIR, "token-tracker.json");
+      await Bun.write(configPath, JSON.stringify(config, null, 2));
+      console.log(`\nConfig saved to: ${configPath}`);
+    } else {
+      console.log(
+        "\nSkipping API config (no URL or key provided). Token tracking disabled."
+      );
+    }
 
-  console.log("\n=== Setup Complete ===\n");
-}
+    console.log("\n=== Setup Complete ===\n");
+  });
 
-main().catch(console.error);
+program.parse();

@@ -12,7 +12,7 @@
 		getAgentBreakdown,
 		getModelPerformance,
 		getRecentRequests
-	} from './data.remote';
+	} from '$lib/remote/stats.remote';
 
 	let currentTime = $state(new Date().toLocaleTimeString());
 

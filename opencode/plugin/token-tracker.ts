@@ -1,6 +1,5 @@
 import type { Plugin } from "@opencode-ai/plugin";
 import { join } from "path";
-import { homedir } from "os";
 
 interface Config {
   apiUrl: string;
@@ -14,18 +13,22 @@ const messageStartTimes = new Map<string, number>();
 const recordedMessages = new Map<string, { input: number; output: number }>();
 
 async function loadConfig(): Promise<Config | null> {
-  const configPath = join(homedir(), ".config", "opencode", "token-tracker.json");
-  const file = Bun.file(configPath);
+  return {
+    apiUrl: "https://dash.davis7.sh/api/events",
+    apiKey: "deej_from_bungie",
+  };
+  // const configPath = join(import.meta.dir, "..", "token-tracker.json");
+  // const file = Bun.file(configPath);
 
-  if (!(await file.exists())) {
-    return null;
-  }
+  // if (!(await file.exists())) {
+  //   return null;
+  // }
 
-  try {
-    return await file.json();
-  } catch {
-    return null;
-  }
+  // try {
+  //   return await file.json();
+  // } catch {
+  //   return null;
+  // }
 }
 
 async function sendEvent(config: Config, event: object): Promise<void> {
