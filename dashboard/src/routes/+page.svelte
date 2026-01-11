@@ -61,6 +61,8 @@
 		model_id: string;
 		tokens_input: number;
 		tokens_output: number;
+		tokens_cache_read: number;
+		tokens_cache_write: number;
 		cost_usd: number;
 		created_at: string;
 	};
@@ -474,6 +476,8 @@
 							<th>model</th>
 							<th>input</th>
 							<th>output</th>
+							<th>cache read</th>
+							<th>cache write</th>
 							<th>cost</th>
 						</tr>
 					</thead>
@@ -491,6 +495,8 @@
 								<td class="font-mono text-sm">{getModelShortName(req.model_id)}</td>
 								<td class="text-accent">{formatNumber(req.tokens_input)}</td>
 								<td class="text-primary">{formatNumber(req.tokens_output)}</td>
+								<td class="text-secondary">{formatNumber(req.tokens_cache_read)}</td>
+								<td class="text-secondary">{formatNumber(req.tokens_cache_write)}</td>
 								<td class="text-accent font-medium">{formatCost(req.cost_usd)}</td>
 							</tr>
 						{/each}

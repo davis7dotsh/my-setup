@@ -166,6 +166,8 @@ export const getRecentRequests = query(async () => {
 			model_id: requests.modelId,
 			tokens_input: requests.tokensInput,
 			tokens_output: requests.tokensOutput,
+			tokens_cache_read: requests.tokensCacheRead,
+			tokens_cache_write: requests.tokensCacheWrite,
 			cost_usd: requests.costUsd,
 			created_at: requests.createdAt
 		})
@@ -178,6 +180,8 @@ export const getRecentRequests = query(async () => {
 		model_id: r.model_id,
 		tokens_input: Number(r.tokens_input ?? 0),
 		tokens_output: Number(r.tokens_output ?? 0),
+		tokens_cache_read: Number(r.tokens_cache_read ?? 0),
+		tokens_cache_write: Number(r.tokens_cache_write ?? 0),
 		cost_usd: Number(r.cost_usd ?? 0),
 		created_at: r.created_at?.toISOString() ?? new Date().toISOString()
 	}));
