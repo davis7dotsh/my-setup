@@ -230,7 +230,7 @@
 		// Background areas
 		g.append('path')
 			.datum(points)
-			.attr('fill', 'rgba(59, 130, 246, 0.12)')
+			.attr('fill', 'rgba(59, 130, 246, 0.18)')
 			.attr('d', areaInput)
 			.attr('opacity', 0)
 			.transition()
@@ -239,7 +239,7 @@
 
 		g.append('path')
 			.datum(points)
-			.attr('fill', 'rgba(229, 231, 235, 0.08)')
+			.attr('fill', 'rgba(255, 255, 255, 0.12)')
 			.attr('d', areaOutput)
 			.attr('opacity', 0)
 			.transition()
@@ -277,7 +277,7 @@
 			.append('path')
 			.datum(points)
 			.attr('fill', 'none')
-			.attr('stroke', '#3b82f6')
+			.attr('stroke', 'var(--color-accent)')
 			.attr('stroke-width', 2)
 			.attr('d', lineInput);
 
@@ -285,7 +285,7 @@
 			.append('path')
 			.datum(points)
 			.attr('fill', 'none')
-			.attr('stroke', '#e5e7eb')
+			.attr('stroke', 'rgba(255, 255, 255, 0.80)')
 			.attr('stroke-width', 2)
 			.attr('d', lineOutput);
 
@@ -322,7 +322,7 @@
 						.tickFormat((d) => `${String(d).padStart(2, '0')}:00`)
 				)
 				.selectAll('text')
-				.attr('fill', 'rgba(136, 136, 160, 0.8)')
+				.attr('fill', 'rgba(255, 255, 255, 0.50)')
 				.attr('font-size', '10px');
 		} else {
 			const fmt =
@@ -340,7 +340,7 @@
 						.tickFormat((d) => fmt(d as Date))
 				)
 				.selectAll('text')
-				.attr('fill', 'rgba(136, 136, 160, 0.8)')
+				.attr('fill', 'rgba(255, 255, 255, 0.50)')
 				.attr('font-size', '10px');
 		}
 
@@ -348,7 +348,7 @@
 			.attr('class', 'axis')
 			.call(d3.axisLeft(y).ticks(5).tickFormat(d3.format('.2s')))
 			.selectAll('text')
-			.attr('fill', 'rgba(136, 136, 160, 0.8)')
+			.attr('fill', 'rgba(255, 255, 255, 0.50)')
 			.attr('font-size', '10px');
 
 		g.selectAll('.domain').attr('stroke', 'rgba(255, 255, 255, 0.10)');
@@ -361,13 +361,13 @@
 			.attr('y1', 5)
 			.attr('x2', 16)
 			.attr('y2', 5)
-			.attr('stroke', '#3b82f6')
+			.attr('stroke', 'var(--color-accent)')
 			.attr('stroke-width', 2);
 		legend
 			.append('text')
 			.attr('x', 20)
 			.attr('y', 8)
-			.attr('fill', 'rgba(136, 136, 160, 0.8)')
+			.attr('fill', 'rgba(255, 255, 255, 0.50)')
 			.attr('font-size', '10px')
 			.text('In');
 		legend
@@ -376,13 +376,13 @@
 			.attr('y1', 5)
 			.attr('x2', 74)
 			.attr('y2', 5)
-			.attr('stroke', '#e5e7eb')
+			.attr('stroke', 'rgba(255, 255, 255, 0.80)')
 			.attr('stroke-width', 2);
 		legend
 			.append('text')
 			.attr('x', 78)
 			.attr('y', 8)
-			.attr('fill', 'rgba(136, 136, 160, 0.8)')
+			.attr('fill', 'rgba(255, 255, 255, 0.50)')
 			.attr('font-size', '10px')
 			.text('Out');
 
@@ -399,17 +399,17 @@
 			.append('circle')
 			.attr('r', 7)
 			.attr('fill', 'rgba(0, 0, 0, 0.85)')
-			.attr('stroke', '#3b82f6')
+			.attr('stroke', 'var(--color-accent)')
 			.attr('stroke-width', 1.5);
-		const inDot = focus.append('circle').attr('r', 3).attr('fill', '#3b82f6');
+		const inDot = focus.append('circle').attr('r', 3).attr('fill', 'var(--color-accent)');
 
 		const outOuter = focus
 			.append('circle')
 			.attr('r', 7)
 			.attr('fill', 'rgba(0, 0, 0, 0.85)')
-			.attr('stroke', '#e5e7eb')
+			.attr('stroke', 'rgba(255, 255, 255, 0.80)')
 			.attr('stroke-width', 1.5);
-		const outDot = focus.append('circle').attr('r', 3).attr('fill', '#e5e7eb');
+		const outDot = focus.append('circle').attr('r', 3).attr('fill', 'rgba(255, 255, 255, 0.80)');
 
 		function updateTooltipForPoint(event: PointerEvent, d: Point) {
 			const [px, py] = d3.pointer(event, containerEl);

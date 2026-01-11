@@ -93,11 +93,16 @@
 		const cellWidth = innerWidth / 24;
 		const cellHeight = innerHeight / 7;
 
+		const styles =
+			typeof window !== 'undefined' ? getComputedStyle(document.documentElement) : null;
+		const accent = styles?.getPropertyValue('--color-accent').trim() || '#3b82f6';
+		const bgVoid = styles?.getPropertyValue('--color-bg-void').trim() || '#000000';
+
 		// Color scale
 		const colorScale = d3
 			.scaleSequential()
 			.domain([0, maxRequests])
-			.interpolator(d3.interpolateRgb('#000000', '#3b82f6'));
+			.interpolator(d3.interpolateRgb(bgVoid, accent));
 
 		// No glow filter (clean theme)
 
@@ -113,14 +118,14 @@
 			.attr('width', cellWidth - 2)
 			.attr('height', cellHeight - 2)
 			.attr('rx', 0)
-			.attr('fill', '#000000')
-			.attr('stroke', 'rgba(255, 255, 255, 0.10)')
+			.attr('fill', bgVoid)
+			.attr('stroke', 'var(--color-grid-line-bright)')
 			.attr('stroke-width', 0.5)
 			.style('cursor', 'pointer')
 			.on('pointerenter', function () {
 				d3.select(this)
 					.interrupt()
-					.attr('stroke', 'rgba(255, 255, 255, 0.35)')
+					.attr('stroke', 'var(--color-accent-dim)')
 					.attr('stroke-width', 1.5);
 			})
 			.on('pointermove', function (event, d) {
@@ -142,7 +147,7 @@
 				tooltip = null;
 				d3.select(this)
 					.interrupt()
-					.attr('stroke', 'rgba(255, 255, 255, 0.10)')
+					.attr('stroke', 'var(--color-grid-line-bright)')
 					.attr('stroke-width', 0.5);
 			});
 
@@ -162,7 +167,7 @@
 			.attr('x', (d) => d * cellWidth + cellWidth / 2)
 			.attr('y', innerHeight + 20)
 			.attr('text-anchor', 'middle')
-			.attr('fill', 'rgba(136, 136, 160, 0.8)')
+			.attr('fill', 'rgba(255, 255, 255, 0.50)')
 			.attr('font-size', '10px')
 			.text((d) => `${d}:00`);
 
@@ -177,7 +182,7 @@
 			.attr('y', (_, i) => i * cellHeight + cellHeight / 2)
 			.attr('text-anchor', 'end')
 			.attr('dominant-baseline', 'middle')
-			.attr('fill', 'rgba(136, 136, 160, 0.8)')
+			.attr('fill', 'rgba(255, 255, 255, 0.50)')
 			.attr('font-size', '10px')
 			.text((d) => d);
 
@@ -187,7 +192,7 @@
 			.attr('x', actualWidth / 2)
 			.attr('y', 15)
 			.attr('text-anchor', 'middle')
-			.attr('fill', 'rgba(136, 136, 160, 0.6)')
+			.attr('fill', 'rgba(255, 255, 255, 0.45)')
 			.attr('font-size', '11px')
 			.attr('letter-spacing', '0.1em')
 			.text('ACTIVITY HEATMAP');

@@ -33,7 +33,15 @@
 		return `$${n.toFixed(4)}`;
 	}
 
-	const colors = ['#3b82f6', '#e5e7eb', '#cbd5e1', '#94a3b8', '#64748b', '#475569', '#334155'];
+	const colors = [
+		'var(--color-accent)',
+		'var(--color-accent-2)',
+		'rgba(255, 255, 255, 0.85)',
+		'rgba(255, 255, 255, 0.65)',
+		'rgba(255, 255, 255, 0.45)',
+		'rgba(255, 255, 255, 0.30)',
+		'rgba(255, 255, 255, 0.18)'
+	];
 
 	function renderChart() {
 		if (!svgElement || !data || data.length === 0) return;
@@ -80,7 +88,7 @@
 		}
 
 		function resetCenter() {
-			setCenterValue(formatUsd(total), 'TOTAL COST', '#3b82f6');
+			setCenterValue(formatUsd(total), 'TOTAL COST', 'var(--color-accent)');
 		}
 
 		function updateTooltip(event: PointerEvent, title: string, lines: TooltipState['lines']) {
@@ -101,7 +109,7 @@
 			.attr('d', arc)
 			.attr('fill', (_, i) => colors[i % colors.length])
 			.attr('opacity', 0.9)
-			.attr('stroke', 'rgba(255, 255, 255, 0.10)')
+			.attr('stroke', 'rgba(255, 255, 255, 0.08)')
 			.attr('stroke-width', 1)
 			.style('cursor', 'pointer')
 			.on('pointerenter', function (event, d) {
@@ -151,16 +159,16 @@
 			.append('text')
 			.attr('text-anchor', 'middle')
 			.attr('dy', '-0.2em')
-			.attr('fill', '#3b82f6')
+			.attr('fill', 'var(--color-accent)')
 			.attr('font-size', '24px')
 			.attr('font-weight', '600')
-			.attr('font-family', 'IBM Plex Mono, monospace');
+			.attr('font-family', 'JetBrains Mono, monospace');
 
 		centerLabelText = g
 			.append('text')
 			.attr('text-anchor', 'middle')
 			.attr('dy', '1.2em')
-			.attr('fill', 'rgba(136, 136, 160, 0.8)')
+			.attr('fill', 'rgba(255, 255, 255, 0.50)')
 			.attr('font-size', '10px')
 			.attr('letter-spacing', '0.1em');
 
@@ -231,7 +239,7 @@
 			.append('text')
 			.attr('x', 18)
 			.attr('y', 10)
-			.attr('fill', 'rgba(136, 136, 160, 0.8)')
+			.attr('fill', 'rgba(255, 255, 255, 0.50)')
 			.attr('font-size', '9px')
 			.text((d) => (d.label.length > 12 ? d.label.slice(0, 12) + '...' : d.label));
 	}

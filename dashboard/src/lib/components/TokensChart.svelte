@@ -54,7 +54,7 @@
 		// Gradients
 		const defs = svg.append('defs');
 
-		// Input gradient (cyan)
+		// Input gradient
 		const inputGrad = defs
 			.append('linearGradient')
 			.attr('id', 'inputGrad')
@@ -65,15 +65,15 @@
 		inputGrad
 			.append('stop')
 			.attr('offset', '0%')
-			.attr('stop-color', '#3b82f6')
-			.attr('stop-opacity', 0.35);
+			.attr('stop-color', 'var(--color-accent)')
+			.attr('stop-opacity', 0.40);
 		inputGrad
 			.append('stop')
 			.attr('offset', '100%')
-			.attr('stop-color', '#3b82f6')
-			.attr('stop-opacity', 0.03);
+			.attr('stop-color', 'var(--color-accent)')
+			.attr('stop-opacity', 0.05);
 
-		// Output gradient (neutral)
+		// Output gradient (neutral white)
 		const outputGrad = defs
 			.append('linearGradient')
 			.attr('id', 'outputGrad')
@@ -84,13 +84,13 @@
 		outputGrad
 			.append('stop')
 			.attr('offset', '0%')
-			.attr('stop-color', '#e5e7eb')
-			.attr('stop-opacity', 0.25);
+			.attr('stop-color', 'rgba(255, 255, 255, 0.80)')
+			.attr('stop-opacity', 0.28);
 		outputGrad
 			.append('stop')
 			.attr('offset', '100%')
-			.attr('stop-color', '#e5e7eb')
-			.attr('stop-opacity', 0.02);
+			.attr('stop-color', 'rgba(255, 255, 255, 0.80)')
+			.attr('stop-opacity', 0.03);
 
 		// No glow filters (clean theme)
 
@@ -128,13 +128,13 @@
 			.attr('y1', 5)
 			.attr('x2', 20)
 			.attr('y2', 5)
-			.attr('stroke', '#3b82f6')
+			.attr('stroke', 'var(--color-accent)')
 			.attr('stroke-width', 2);
 		legend
 			.append('text')
 			.attr('x', 25)
 			.attr('y', 8)
-			.attr('fill', 'rgba(136, 136, 160, 0.8)')
+			.attr('fill', 'rgba(255, 255, 255, 0.50)')
 			.attr('font-size', '10px')
 			.text('Input');
 		legend
@@ -143,13 +143,13 @@
 			.attr('y1', 5)
 			.attr('x2', 80)
 			.attr('y2', 5)
-			.attr('stroke', '#e5e7eb')
+			.attr('stroke', 'rgba(255, 255, 255, 0.80)')
 			.attr('stroke-width', 2);
 		legend
 			.append('text')
 			.attr('x', 85)
 			.attr('y', 8)
-			.attr('fill', 'rgba(136, 136, 160, 0.8)')
+			.attr('fill', 'rgba(255, 255, 255, 0.50)')
 			.attr('font-size', '10px')
 			.text('Output');
 
@@ -174,7 +174,7 @@
 				.attr('width', barWidth)
 				.attr('height', 0)
 				.attr('fill', 'url(#inputGrad)')
-				.attr('stroke', '#3b82f6')
+				.attr('stroke', 'var(--color-accent)')
 				.attr('stroke-width', 2)
 				.attr('rx', 0)
 				.style('cursor', 'pointer')
@@ -206,7 +206,7 @@
 				.attr('width', barWidth)
 				.attr('height', 0)
 				.attr('fill', 'url(#outputGrad)')
-				.attr('stroke', '#e5e7eb')
+				.attr('stroke', 'rgba(255, 255, 255, 0.80)')
 				.attr('stroke-width', 2)
 				.attr('rx', 0)
 				.style('cursor', 'pointer')
@@ -236,7 +236,7 @@
 				.attr('x', centerX - barWidth / 2 - gap / 2)
 				.attr('y', y(d.input) - 10)
 				.attr('text-anchor', 'middle')
-				.attr('fill', '#3b82f6')
+				.attr('fill', 'var(--color-accent)')
 				.attr('font-size', '12px')
 				.attr('font-weight', '600')
 				.attr('opacity', 0)
@@ -249,7 +249,7 @@
 				.attr('x', centerX + barWidth / 2 + gap / 2)
 				.attr('y', y(d.output) - 10)
 				.attr('text-anchor', 'middle')
-				.attr('fill', '#e5e7eb')
+				.attr('fill', 'rgba(255, 255, 255, 0.80)')
 				.attr('font-size', '12px')
 				.attr('font-weight', '600')
 				.attr('opacity', 0)
@@ -264,7 +264,7 @@
 				.attr('x', centerX)
 				.attr('y', innerHeight + 20)
 				.attr('text-anchor', 'middle')
-				.attr('fill', 'rgba(136, 136, 160, 0.8)')
+				.attr('fill', 'rgba(255, 255, 255, 0.50)')
 				.attr('font-size', '10px')
 				.text(d3.timeFormat('%b %d, %Y')(d.date));
 
@@ -273,7 +273,7 @@
 				.attr('class', 'axis')
 				.call(d3.axisLeft(y).ticks(5).tickFormat(d3.format('.2s')))
 				.selectAll('text')
-				.attr('fill', 'rgba(136, 136, 160, 0.8)')
+				.attr('fill', 'rgba(255, 255, 255, 0.50)')
 				.attr('font-size', '10px');
 
 			g.selectAll('.domain').attr('stroke', 'rgba(255, 255, 255, 0.10)');
@@ -332,7 +332,7 @@
 			.append('path')
 			.datum(parsedData)
 			.attr('fill', 'none')
-			.attr('stroke', '#3b82f6')
+			.attr('stroke', 'var(--color-accent)')
 			.attr('stroke-width', 2)
 			.attr('d', inputLine);
 
@@ -356,7 +356,7 @@
 			.append('path')
 			.datum(parsedData)
 			.attr('fill', 'none')
-			.attr('stroke', '#e5e7eb')
+			.attr('stroke', 'rgba(255, 255, 255, 0.80)')
 			.attr('stroke-width', 2)
 			.attr('d', outputLine);
 
@@ -379,7 +379,7 @@
 			.attr('cx', (d) => x(d.date))
 			.attr('cy', (d) => y(d.input))
 			.attr('r', 0)
-			.attr('fill', '#3b82f6')
+			.attr('fill', 'var(--color-accent)')
 			.style('pointer-events', 'none')
 			.transition()
 			.delay((_, i) => i * 30)
@@ -394,7 +394,7 @@
 			.attr('cx', (d) => x(d.date))
 			.attr('cy', (d) => y(d.output))
 			.attr('r', 0)
-			.attr('fill', '#e5e7eb')
+			.attr('fill', 'rgba(255, 255, 255, 0.80)')
 			.style('pointer-events', 'none')
 			.transition()
 			.delay((_, i) => i * 30 + 150)
@@ -412,14 +412,14 @@
 					.tickFormat((d) => d3.timeFormat('%b %d')(d as Date))
 			)
 			.selectAll('text')
-			.attr('fill', 'rgba(136, 136, 160, 0.8)')
+			.attr('fill', 'rgba(255, 255, 255, 0.50)')
 			.attr('font-size', '10px');
 
 		g.append('g')
 			.attr('class', 'axis')
 			.call(d3.axisLeft(y).ticks(5).tickFormat(d3.format('.2s')))
 			.selectAll('text')
-			.attr('fill', 'rgba(136, 136, 160, 0.8)')
+			.attr('fill', 'rgba(255, 255, 255, 0.50)')
 			.attr('font-size', '10px');
 
 		g.selectAll('.domain').attr('stroke', 'rgba(255, 255, 255, 0.10)');
@@ -438,17 +438,17 @@
 			.append('circle')
 			.attr('r', 7)
 			.attr('fill', 'rgba(0, 0, 0, 0.85)')
-			.attr('stroke', '#3b82f6')
+			.attr('stroke', 'var(--color-accent)')
 			.attr('stroke-width', 1.5);
-		const inputDot = focus.append('circle').attr('r', 3).attr('fill', '#3b82f6');
+		const inputDot = focus.append('circle').attr('r', 3).attr('fill', 'var(--color-accent)');
 
 		const outputOuter = focus
 			.append('circle')
 			.attr('r', 7)
 			.attr('fill', 'rgba(0, 0, 0, 0.85)')
-			.attr('stroke', '#e5e7eb')
+			.attr('stroke', 'rgba(255, 255, 255, 0.80)')
 			.attr('stroke-width', 1.5);
-		const outputDot = focus.append('circle').attr('r', 3).attr('fill', '#e5e7eb');
+		const outputDot = focus.append('circle').attr('r', 3).attr('fill', 'rgba(255, 252, 244, 0.78)');
 
 		const bisectDate = d3.bisector((d: { date: Date }) => d.date).left;
 

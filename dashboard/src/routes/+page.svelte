@@ -56,6 +56,11 @@
 		if (ms >= 1000) return (ms / 1000).toFixed(1) + 's';
 		return ms.toFixed(0) + 'ms';
 	}
+
+	function formatPercent(part: number, total: number): string {
+		if (total <= 0) return '0%';
+		return ((part / total) * 100).toFixed(1) + '%';
+	}
 </script>
 
 {#snippet loadingState()}
@@ -70,7 +75,7 @@
 		<span class="text-sm">Failed to load</span>
 		<button
 			onclick={retry}
-			class="text-xs px-2 py-1 bg-transparent border border-accent-dim text-text-secondary hover:border-accent hover:text-accent cursor-pointer"
+			class="text-xs px-2 py-1 bg-transparent border border-accent-dim text-text-secondary hover:border-accent hover:text-text-primary cursor-pointer"
 			>Retry</button
 		>
 	</div>
@@ -79,121 +84,121 @@
 <div class="min-h-screen p-4 max-w-[1600px] mx-auto sm:p-6">
 	<!-- Header -->
 	<header
-		class="flex flex-col gap-4 mb-8 pb-4 border-b border-grid-line-bright sm:flex-row sm:justify-between sm:items-center"
+		class="panel panel-accent reveal flex flex-col gap-4 mb-8 p-4 overflow-hidden sm:flex-row sm:justify-between sm:items-center sm:p-6"
+		style="animation-delay: 40ms;"
 	>
-		<div class="flex items-center gap-6">
-			<h1 class="text-xl font-bold flex items-baseline gap-0.5 sm:text-2xl">
-				<span class="text-accent-dim">[</span>
-				<span class="text-accent">OPENCODE</span>
-				<span class="text-accent-dim">]</span>
-				<span class="text-text-tertiary font-normal text-sm ml-1 sm:text-base">stats</span>
+		<div class="flex flex-col gap-2">
+			<div class="text-[0.65rem] tracking-[0.32em] uppercase text-text-tertiary">
+				telemetry / tokens / cost
+			</div>
+			<h1 class="text-3xl leading-[0.95] sm:text-4xl">
+				OpenCode <span class="text-accent">Observatory</span>
 			</h1>
+			<div class="text-xs text-text-secondary max-w-[72ch]">
+				A tiny instrument panel for OpenCode’s LLM usage.
+			</div>
 		</div>
+
 		<div class="flex items-center justify-between gap-4 sm:gap-6">
-			<div class="text-lg text-text-secondary tabular-nums sm:text-xl">{currentTime}</div>
-			<button
-				onclick={refreshAll}
-				class="flex items-center gap-2 px-3 py-2 bg-bg-elevated border border-accent-dim text-accent-bright hover:bg-accent-dim hover:border-accent-bright cursor-pointer text-sm sm:px-4 sm:text-base"
-			>
-				<span class="text-base">↻</span> <span class="hidden xs:inline">REFRESH</span>
+			<div class="flex flex-col items-end">
+				<div class="text-[0.65rem] tracking-[0.32em] uppercase text-text-tertiary">local time</div>
+				<div class="text-lg text-text-secondary tabular-nums sm:text-2xl">{currentTime}</div>
+			</div>
+			<button onclick={refreshAll} class="btn">
+				<span class="text-base">↻</span> <span class="hidden xs:inline">refresh</span>
 			</button>
 		</div>
 	</header>
 
 	<!-- Main Stats Row -->
-	<section class="grid grid-cols-1 gap-4 mb-6 sm:grid-cols-2 lg:grid-cols-4">
+	<section
+		class="grid grid-cols-1 gap-4 mb-6 sm:grid-cols-2 lg:grid-cols-4"
+		aria-label="Top-level totals"
+	>
 		<svelte:boundary>
 			{#snippet pending()}
-				<div
-					class="bg-bg-card border border-grid-line-bright p-4 sm:p-6 relative overflow-hidden before:content-[''] before:absolute before:top-0 before:left-0 before:right-0 before:h-0.5 before:bg-gradient-to-r before:from-transparent before:via-accent-dim before:to-transparent"
-				>
+				<div class="panel reveal p-4 sm:p-6" style="animation-delay: 80ms;">
 					<div class="text-2xl sm:text-4xl font-bold text-accent leading-none animate-pulse-custom">
 						--
 					</div>
-					<div class="text-xs text-text-tertiary uppercase tracking-widest mt-2">TOTAL SPENT</div>
+					<div class="text-xs text-text-tertiary uppercase tracking-widest mt-2">total spent</div>
 				</div>
-				<div
-					class="bg-bg-card border border-grid-line-bright p-4 sm:p-6 relative overflow-hidden before:content-[''] before:absolute before:top-0 before:left-0 before:right-0 before:h-0.5 before:bg-gradient-to-r before:from-transparent before:via-accent-dim before:to-transparent"
-				>
+				<div class="panel reveal p-4 sm:p-6" style="animation-delay: 110ms;">
 					<div class="text-2xl sm:text-4xl font-bold text-accent leading-none animate-pulse-custom">
 						--
 					</div>
 					<div class="text-xs text-text-tertiary uppercase tracking-widest mt-2">
-						TOTAL REQUESTS
+						total requests
 					</div>
 				</div>
-				<div
-					class="bg-bg-card border border-grid-line-bright p-4 sm:p-6 relative overflow-hidden before:content-[''] before:absolute before:top-0 before:left-0 before:right-0 before:h-0.5 before:bg-gradient-to-r before:from-transparent before:via-accent-dim before:to-transparent"
-				>
+				<div class="panel reveal p-4 sm:p-6" style="animation-delay: 140ms;">
 					<div
-						class="text-2xl sm:text-4xl font-bold text-white/92 leading-none animate-pulse-custom"
+						class="text-2xl sm:text-4xl font-bold text-text-primary leading-none animate-pulse-custom"
 					>
 						--
 					</div>
-					<div class="text-xs text-text-tertiary uppercase tracking-widest mt-2">INPUT TOKENS</div>
+					<div class="text-xs text-text-tertiary uppercase tracking-widest mt-2">input tokens</div>
+					<div class="mt-2 text-[0.65rem] text-text-tertiary uppercase tracking-[0.18em]">
+						cached --
+					</div>
 				</div>
-				<div
-					class="bg-bg-card border border-grid-line-bright p-4 sm:p-6 relative overflow-hidden before:content-[''] before:absolute before:top-0 before:left-0 before:right-0 before:h-0.5 before:bg-gradient-to-r before:from-transparent before:via-accent-dim before:to-transparent"
-				>
+				<div class="panel reveal p-4 sm:p-6" style="animation-delay: 170ms;">
 					<div
-						class="text-2xl sm:text-4xl font-bold text-white/[0.78] leading-none animate-pulse-custom"
+						class="text-2xl sm:text-4xl font-bold text-text-secondary leading-none animate-pulse-custom"
 					>
 						--
 					</div>
-					<div class="text-xs text-text-tertiary uppercase tracking-widest mt-2">OUTPUT TOKENS</div>
+					<div class="text-xs text-text-tertiary uppercase tracking-widest mt-2">output tokens</div>
 				</div>
 			{/snippet}
 			{#snippet failed(error, retry)}
-				<div
-					class="bg-bg-card border border-accent-dim p-4 sm:p-6 flex items-center justify-center"
-				>
+				<div class="panel p-4 sm:p-6 flex items-center justify-center">
 					{@render errorState(error, retry)}
 				</div>
 			{/snippet}
 			{@const totals = await getTotals()}
-			<div
-				class="bg-bg-card border border-accent-dim p-4 sm:p-6 relative overflow-hidden before:content-[''] before:absolute before:top-0 before:left-0 before:right-0 before:h-[3px] before:bg-gradient-to-r before:from-transparent before:via-accent before:to-transparent"
-			>
+			{@const totalPrompt = totals.total_input + totals.total_cache_read}
+			<div class="panel panel-accent reveal p-4 sm:p-6" style="animation-delay: 80ms;">
 				<div class="text-2xl sm:text-4xl font-bold text-accent leading-none">
 					{formatCost(totals.total_cost)}
 				</div>
-				<div class="text-xs text-text-tertiary uppercase tracking-widest mt-2">TOTAL SPENT</div>
+				<div class="text-xs text-text-tertiary uppercase tracking-widest mt-2">total spent</div>
 				<div
-					class="absolute -bottom-5 -right-5 w-[100px] h-[100px] bg-[radial-gradient(circle,rgba(59,130,246,0.08)_0%,transparent_70%)] pointer-events-none"
+					class="absolute -bottom-7 -right-8 w-[140px] h-[140px] bg-[radial-gradient(circle,rgba(59,130,246,0.18)_0%,transparent_65%)] pointer-events-none"
 				></div>
 			</div>
-			<div
-				class="bg-bg-card border border-grid-line-bright p-4 sm:p-6 relative overflow-hidden before:content-[''] before:absolute before:top-0 before:left-0 before:right-0 before:h-0.5 before:bg-gradient-to-r before:from-transparent before:via-accent-dim before:to-transparent"
-			>
+			<div class="panel reveal p-4 sm:p-6" style="animation-delay: 110ms;">
 				<div class="text-2xl sm:text-4xl font-bold text-accent leading-none">
 					{formatNumber(totals.total_requests)}
 				</div>
-				<div class="text-xs text-text-tertiary uppercase tracking-widest mt-2">TOTAL REQUESTS</div>
+				<div class="text-xs text-text-tertiary uppercase tracking-widest mt-2">total requests</div>
 			</div>
-			<div
-				class="bg-bg-card border border-grid-line-bright p-4 sm:p-6 relative overflow-hidden before:content-[''] before:absolute before:top-0 before:left-0 before:right-0 before:h-0.5 before:bg-gradient-to-r before:from-transparent before:via-accent-dim before:to-transparent"
-			>
-				<div class="text-2xl sm:text-4xl font-bold text-white/[0.92] leading-none">
+			<div class="panel reveal p-4 sm:p-6" style="animation-delay: 140ms;">
+				<div class="text-2xl sm:text-4xl font-bold text-text-primary leading-none">
 					{formatNumber(totals.total_input)}
 				</div>
-				<div class="text-xs text-text-tertiary uppercase tracking-widest mt-2">INPUT TOKENS</div>
+				<div class="text-xs text-text-tertiary uppercase tracking-widest mt-2">input tokens</div>
+				<div class="mt-2 text-[0.65rem] text-text-tertiary uppercase tracking-[0.18em]">
+					cached <span class="text-accent">{formatNumber(totals.total_cache_read)}</span>
+					<span class="text-text-tertiary">
+						({formatPercent(totals.total_cache_read, totalPrompt)})</span
+					>
+				</div>
 			</div>
-			<div
-				class="bg-bg-card border border-grid-line-bright p-4 sm:p-6 relative overflow-hidden before:content-[''] before:absolute before:top-0 before:left-0 before:right-0 before:h-0.5 before:bg-gradient-to-r before:from-transparent before:via-accent-dim before:to-transparent"
-			>
-				<div class="text-2xl sm:text-4xl font-bold text-white/[0.78] leading-none">
+			<div class="panel reveal p-4 sm:p-6" style="animation-delay: 170ms;">
+				<div class="text-2xl sm:text-4xl font-bold text-text-secondary leading-none">
 					{formatNumber(totals.total_output)}
 				</div>
-				<div class="text-xs text-text-tertiary uppercase tracking-widest mt-2">OUTPUT TOKENS</div>
+				<div class="text-xs text-text-tertiary uppercase tracking-widest mt-2">output tokens</div>
 			</div>
 		</svelte:boundary>
 	</section>
 
 	<!-- Charts Row 1 -->
 	<section class="grid grid-cols-1 gap-4 mb-6 lg:grid-cols-[2fr_1fr]">
-		<div class="bg-bg-card border border-grid-line-bright p-4 sm:p-6">
+		<div class="panel reveal p-4 sm:p-6" style="animation-delay: 210ms;">
 			<h2 class="mb-4 text-xs font-medium text-text-secondary uppercase tracking-[0.15em]">
-				COST OVER TIME
+				cost over time
 			</h2>
 			<svelte:boundary>
 				{#snippet pending()}
@@ -204,12 +209,17 @@
 				{/snippet}
 				{@const costOverTime = await getCostOverTime()}
 				{@const costTimeData = costOverTime.map((d) => ({ date: d.date, value: d.cost_usd }))}
-				<AreaChart data={costTimeData} height={220} color="#3b82f6" gradientId="costGrad" />
+				<AreaChart
+					data={costTimeData}
+					height={220}
+					color="var(--color-accent)"
+					gradientId="costGrad"
+				/>
 			</svelte:boundary>
 		</div>
-		<div class="bg-bg-card border border-grid-line-bright p-4 sm:p-6">
+		<div class="panel reveal p-4 sm:p-6" style="animation-delay: 240ms;">
 			<h2 class="mb-4 text-xs font-medium text-text-secondary uppercase tracking-[0.15em]">
-				COST BY MODEL
+				cost by model
 			</h2>
 			<svelte:boundary>
 				{#snippet pending()}
@@ -229,9 +239,9 @@
 
 	<!-- Charts Row 2 -->
 	<section class="grid grid-cols-1 gap-4 mb-6 lg:grid-cols-[2fr_1fr]">
-		<div class="bg-bg-card border border-grid-line-bright p-4 sm:p-6">
+		<div class="panel reveal p-4 sm:p-6" style="animation-delay: 270ms;">
 			<h2 class="mb-4 text-xs font-medium text-text-secondary uppercase tracking-[0.15em]">
-				TOKEN FLOW
+				token flow
 			</h2>
 			<svelte:boundary>
 				{#snippet pending()}
@@ -249,9 +259,9 @@
 				<TokensChart data={tokensTimeData} height={220} />
 			</svelte:boundary>
 		</div>
-		<div class="bg-bg-card border border-grid-line-bright p-4 sm:p-6">
+		<div class="panel reveal p-4 sm:p-6" style="animation-delay: 300ms;">
 			<h2 class="mb-4 text-xs font-medium text-text-secondary uppercase tracking-[0.15em]">
-				COST BY AGENT
+				cost by agent
 			</h2>
 			<svelte:boundary>
 				{#snippet pending()}
@@ -265,24 +275,24 @@
 					label: d.agent || 'unknown',
 					value: d.cost_usd
 				}))}
-				<BarChart data={agentCostData} height={220} color="#3b82f6" horizontal={true} />
+				<BarChart data={agentCostData} height={220} color="var(--color-accent)" horizontal={true} />
 			</svelte:boundary>
 		</div>
 	</section>
 
 	<!-- Tokens explorer -->
 	<section class="grid grid-cols-1 gap-4 mb-6">
-		<div class="bg-bg-card border border-grid-line-bright p-4 w-full sm:p-6">
+		<div class="panel reveal p-4 w-full sm:p-6" style="animation-delay: 330ms;">
 			<svelte:boundary>
 				{#snippet pending()}
 					<h2 class="mb-4 text-xs font-medium text-text-secondary uppercase tracking-[0.15em]">
-						TOKENS EXPLORER
+						tokens explorer
 					</h2>
 					{@render loadingState()}
 				{/snippet}
 				{#snippet failed(error, retry)}
 					<h2 class="mb-4 text-xs font-medium text-text-secondary uppercase tracking-[0.15em]">
-						TOKENS EXPLORER
+						tokens explorer
 					</h2>
 					{@render errorState(error, retry)}
 				{/snippet}
@@ -293,9 +303,9 @@
 	</section>
 
 	<!-- Model Performance Table -->
-	<section class="bg-bg-card border border-grid-line-bright p-4 mb-6 sm:p-6">
+	<section class="panel reveal p-4 mb-6 sm:p-6" style="animation-delay: 360ms;">
 		<h2 class="mb-4 text-xs font-medium text-text-secondary uppercase tracking-[0.15em]">
-			MODEL PERFORMANCE
+			model performance
 		</h2>
 		<svelte:boundary>
 			{#snippet pending()}
@@ -310,12 +320,12 @@
 				<table>
 					<thead>
 						<tr>
-							<th>MODEL</th>
-							<th>REQUESTS</th>
-							<th>INPUT</th>
-							<th>OUTPUT</th>
-							<th>AVG DURATION</th>
-							<th>COST</th>
+							<th>model</th>
+							<th>requests</th>
+							<th>input</th>
+							<th>output</th>
+							<th>avg duration</th>
+							<th>cost</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -331,7 +341,7 @@
 								</td>
 								<td>{model.request_count.toLocaleString()}</td>
 								<td class="text-accent">{formatNumber(model.tokens_input)}</td>
-								<td class="text-white/[0.92]">{formatNumber(model.tokens_output)}</td>
+								<td class="text-text-primary">{formatNumber(model.tokens_output)}</td>
 								<td>{avgDuration ? formatDuration(avgDuration.avg_duration_ms) : '-'}</td>
 								<td class="text-accent font-medium">{formatCost(model.cost_usd)}</td>
 							</tr>
@@ -343,9 +353,9 @@
 	</section>
 
 	<!-- Recent Activity -->
-	<section class="bg-bg-card border border-grid-line-bright p-4 mb-6 sm:p-6">
+	<section class="panel reveal p-4 mb-6 sm:p-6" style="animation-delay: 390ms;">
 		<h2 class="mb-4 text-xs font-medium text-text-secondary uppercase tracking-[0.15em]">
-			RECENT ACTIVITY
+			recent activity
 		</h2>
 		<svelte:boundary>
 			{#snippet pending()}
@@ -359,11 +369,11 @@
 				<table>
 					<thead>
 						<tr>
-							<th>TIME</th>
-							<th>MODEL</th>
-							<th>INPUT</th>
-							<th>OUTPUT</th>
-							<th>COST</th>
+							<th>time</th>
+							<th>model</th>
+							<th>input</th>
+							<th>output</th>
+							<th>cost</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -379,7 +389,7 @@
 								</td>
 								<td class="font-mono text-sm">{getModelShortName(req.model_id)}</td>
 								<td class="text-accent">{formatNumber(req.tokens_input)}</td>
-								<td class="text-white/[0.92]">{formatNumber(req.tokens_output)}</td>
+								<td class="text-text-primary">{formatNumber(req.tokens_output)}</td>
 								<td class="text-accent font-medium">{formatCost(req.cost_usd)}</td>
 							</tr>
 						{/each}
@@ -391,7 +401,8 @@
 
 	<!-- Footer -->
 	<footer
-		class="flex flex-col gap-3 py-6 border-t border-grid-line-bright text-text-tertiary text-xs sm:flex-row sm:justify-between sm:items-center"
+		class="reveal flex flex-col gap-3 py-6 border-t border-grid-line-bright text-text-tertiary text-xs sm:flex-row sm:justify-between sm:items-center"
+		style="animation-delay: 420ms;"
 	>
 		<svelte:boundary>
 			{#snippet pending()}
@@ -421,6 +432,6 @@
 				<span>Reasoning: {formatNumber(totals.total_reasoning)}</span>
 			</div>
 		</svelte:boundary>
-		<div class="tracking-[0.15em]">OPENCODE STATS v1.0</div>
+		<div class="tracking-[0.18em] uppercase">OpenCode Stats v1.0</div>
 	</footer>
 </div>

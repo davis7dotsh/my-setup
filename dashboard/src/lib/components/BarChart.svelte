@@ -10,7 +10,13 @@
 		horizontal?: boolean;
 	}
 
-	let { data, width = 400, height = 300, color = '#3b82f6', horizontal = false }: Props = $props();
+	let {
+		data,
+		width = 400,
+		height = 300,
+		color = 'var(--color-accent)',
+		horizontal = false
+	}: Props = $props();
 
 	let svgElement: SVGSVGElement;
 	let containerEl: HTMLDivElement;
@@ -27,6 +33,13 @@
 
 	function clamp(n: number, min: number, max: number) {
 		return Math.max(min, Math.min(max, n));
+	}
+
+	function resolveCssColor(value: string) {
+		if (typeof window === 'undefined') return value;
+		const match = value.match(/^var\((--[^)]+)\)$/);
+		if (!match) return value;
+		return getComputedStyle(document.documentElement).getPropertyValue(match[1]).trim() || value;
 	}
 
 	function formatUsd(n: number) {
@@ -55,8 +68,9 @@
 			.append('g')
 			.attr('transform', `translate(${margin.left},${margin.top})`);
 
+		const resolvedColor = resolveCssColor(color);
 		const total = d3.sum(data, (d) => d.value);
-		const hoverFill = d3.color(color)?.brighter(0.6).formatHex() ?? color;
+		const hoverFill = d3.color(resolvedColor)?.brighter(0.6).formatHex() ?? resolvedColor;
 
 		if (horizontal) {
 			const x = d3
@@ -95,7 +109,7 @@
 				.attr('height', y.bandwidth())
 				.attr('x', 0)
 				.attr('width', 0)
-				.attr('fill', color)
+				.attr('fill', resolvedColor)
 				.attr('stroke', 'transparent')
 				.attr('stroke-width', 1)
 				.attr('rx', 0)
@@ -119,7 +133,7 @@
 				})
 				.on('pointerleave', function () {
 					tooltip = null;
-					d3.select(this).attr('fill', color).attr('stroke', 'transparent');
+					d3.select(this).attr('fill', resolvedColor).attr('stroke', 'transparent');
 				});
 
 			bars
@@ -137,7 +151,7 @@
 				.attr('y', (d) => (y(d.label) || 0) + y.bandwidth() / 2)
 				.attr('x', (d) => x(d.value) + 8)
 				.attr('dy', '0.35em')
-				.attr('fill', 'rgba(136, 136, 160, 0.8)')
+				.attr('fill', 'rgba(255, 255, 255, 0.50)')
 				.attr('font-size', '11px')
 				.style('pointer-events', 'none')
 				.text((d) => formatUsd(d.value));
@@ -147,7 +161,7 @@
 				.attr('class', 'axis')
 				.call(d3.axisLeft(y))
 				.selectAll('text')
-				.attr('fill', 'rgba(136, 136, 160, 0.8)')
+				.attr('fill', 'rgba(255, 255, 255, 0.50)')
 				.attr('font-size', '10px');
 
 			g.selectAll('.domain').remove();
@@ -188,7 +202,7 @@
 				.attr('width', x.bandwidth())
 				.attr('y', innerHeight)
 				.attr('height', 0)
-				.attr('fill', color)
+				.attr('fill', resolvedColor)
 				.attr('stroke', 'transparent')
 				.attr('stroke-width', 1)
 				.attr('rx', 0)
@@ -212,7 +226,7 @@
 				})
 				.on('pointerleave', function () {
 					tooltip = null;
-					d3.select(this).attr('fill', color).attr('stroke', 'transparent');
+					d3.select(this).attr('fill', resolvedColor).attr('stroke', 'transparent');
 				});
 
 			bars
@@ -228,7 +242,7 @@
 				.attr('transform', `translate(0,${innerHeight})`)
 				.call(d3.axisBottom(x))
 				.selectAll('text')
-				.attr('fill', 'rgba(136, 136, 160, 0.8)')
+				.attr('fill', 'rgba(255, 255, 255, 0.50)')
 				.attr('font-size', '10px')
 				.attr('transform', 'rotate(-45)')
 				.attr('text-anchor', 'end');
@@ -238,7 +252,7 @@
 				.attr('class', 'axis')
 				.call(d3.axisLeft(y).ticks(5))
 				.selectAll('text')
-				.attr('fill', 'rgba(136, 136, 160, 0.8)')
+				.attr('fill', 'rgba(255, 255, 255, 0.50)')
 				.attr('font-size', '10px');
 
 			g.selectAll('.domain').attr('stroke', 'rgba(255, 255, 255, 0.10)');

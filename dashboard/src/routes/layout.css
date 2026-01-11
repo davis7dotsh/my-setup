@@ -1,248 +1,111 @@
 @import 'tailwindcss';
 @plugin '@tailwindcss/typography';
 
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap');
-
-@theme {
-	/* Background colors */
-	--color-bg-void: #000000;
-	--color-bg-primary: #050506;
-	--color-bg-elevated: #0b0b0d;
-	--color-bg-card: #0f0f12;
-	--color-bg-hover: #15151a;
-
-	/* Accent */
-	--color-accent: #3b82f6;
-	--color-accent-bright: #60a5fa;
-	--color-accent-dim: rgba(59, 130, 246, 0.35);
-
-	/* Text */
-	--color-text-primary: rgba(255, 255, 255, 0.92);
-	--color-text-secondary: rgba(255, 255, 255, 0.68);
-	--color-text-tertiary: rgba(255, 255, 255, 0.45);
-
-	/* Grid */
-	--color-grid-line: rgba(255, 255, 255, 0.035);
-	--color-grid-line-bright: rgba(255, 255, 255, 0.085);
-
-	/* Font */
-	--font-mono: 'IBM Plex Mono', 'SF Mono', Consolas, monospace;
-}
-
-* {
-	margin: 0;
-	padding: 0;
-	box-sizing: border-box;
-}
-
-html {
-	font-size: 14px;
-	scroll-behavior: smooth;
-}
-
+html,
 body {
-	font-family: var(--font-mono);
-	background: var(--color-bg-void);
+	background-color: var(--color-bg-void);
 	color: var(--color-text-primary);
-	line-height: 1.6;
-	min-height: 100vh;
-	overflow-x: hidden;
+	font-family: var(--font-display);
 }
 
-/* Grid background */
-body::after {
-	content: '';
-	position: fixed;
-	top: 0;
-	left: 0;
-	right: 0;
-	bottom: 0;
-	background-image:
-		linear-gradient(var(--color-grid-line) 1px, transparent 1px),
-		linear-gradient(90deg, var(--color-grid-line) 1px, transparent 1px);
-	background-size: 40px 40px;
-	pointer-events: none;
-	z-index: -1;
-}
-
-::selection {
-	background: var(--color-accent);
-	color: var(--color-bg-void);
-}
-
-/* Scrollbar */
-::-webkit-scrollbar {
-	width: 8px;
-	height: 8px;
-}
-
-::-webkit-scrollbar-track {
-	background: var(--color-bg-primary);
-}
-
-::-webkit-scrollbar-thumb {
-	background: rgba(255, 255, 255, 0.18);
-	border-radius: 0;
-}
-
-::-webkit-scrollbar-thumb:hover {
-	background: rgba(59, 130, 246, 0.45);
-}
-
-/* Typography base */
-h1,
-h2,
-h3,
-h4 {
-	font-family: var(--font-mono);
-	font-weight: 600;
-	letter-spacing: 0.02em;
-}
-
-/* Links */
-a {
-	color: var(--color-accent-bright);
-	text-decoration: none;
-	transition: color 0.2s ease;
-}
-
-a:hover {
-	color: var(--color-accent);
-}
-
-/* Tables base */
 table {
 	width: 100%;
 	border-collapse: collapse;
+	font-size: 0.875rem;
 }
 
-th,
-td {
-	text-align: left;
-	padding: 0.5rem;
-	border-bottom: 1px solid var(--color-grid-line-bright);
-	font-size: 0.75rem;
-}
-
-@media (min-width: 640px) {
-	th,
-	td {
-		padding: 0.75rem;
-		font-size: inherit;
-	}
+thead {
+	position: sticky;
+	top: 0;
+	background-color: var(--color-bg-card);
 }
 
 th {
-	color: var(--color-text-tertiary);
+	text-align: left;
+	padding: 0.75rem 1rem;
+	font-size: 0.65rem;
 	font-weight: 500;
 	text-transform: uppercase;
-	font-size: 0.65rem;
 	letter-spacing: 0.1em;
-	white-space: nowrap;
+	color: var(--color-text-tertiary);
+	border-bottom: 1px solid var(--color-grid-line-bright);
 }
 
-@media (min-width: 640px) {
-	th {
-		font-size: 0.7rem;
-	}
+td {
+	padding: 0.625rem 1rem;
+	color: var(--color-text-secondary);
+	border-bottom: 1px solid var(--color-grid-line);
 }
 
-tr:hover td {
-	background: var(--color-bg-hover);
+tbody tr:hover {
+	background-color: var(--color-bg-hover);
 }
 
-/* D3 Chart SVG base */
 .chart-container {
 	position: relative;
 }
 
-.chart-container svg {
-	overflow: visible;
-	display: block;
-}
-
-.chart-container text {
-	font-family: var(--font-mono);
-	fill: var(--color-text-secondary);
-	font-size: 10px;
-}
-
-.chart-container .axis line,
-.chart-container .axis path {
-	stroke: var(--color-grid-line-bright);
-}
-
-.chart-container .grid line {
-	stroke: var(--color-grid-line);
-}
-
-/* Animations */
-@keyframes pulse {
-	0%,
-	100% {
-		opacity: 1;
-	}
-	50% {
-		opacity: 0.4;
-	}
-}
-
-@keyframes shimmer {
-	0% {
-		background-position: 200% 0;
-	}
-	100% {
-		background-position: -200% 0;
-	}
-}
-
-.animate-pulse-custom {
-	animation: pulse 1.5s ease-in-out infinite;
-}
-
-.animate-shimmer {
-	background: linear-gradient(
-		90deg,
-		var(--color-bg-card) 0%,
-		var(--color-grid-line-bright) 50%,
-		var(--color-bg-card) 100%
-	);
-	background-size: 200% 100%;
-	animation: shimmer 1.5s infinite;
-}
-
-/* Tooltip (used by D3 charts) */
 .tooltip {
 	position: absolute;
-	background: rgba(0, 0, 0, 0.92);
-	border: 1px solid var(--color-grid-line-bright);
-	padding: 0.6rem 0.75rem;
-	font-size: 0.75rem;
 	pointer-events: none;
-	z-index: 1000;
-	backdrop-filter: blur(6px);
-	min-width: 160px;
+	z-index: 50;
+	background-color: var(--color-bg-elevated);
+	border: 1px solid var(--color-grid-line-bright);
+	padding: 0.625rem 0.875rem;
+	font-size: 0.75rem;
+	min-width: 140px;
+	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
 }
 
 .tooltip-title {
-	color: var(--color-text-tertiary);
-	font-size: 0.65rem;
-	letter-spacing: 0.12em;
-	text-transform: uppercase;
-	margin-bottom: 0.35rem;
+	font-weight: 500;
+	color: var(--color-text-primary);
+	margin-bottom: 0.375rem;
+	font-family: var(--font-mono);
 }
 
 .tooltip-row {
 	display: flex;
 	justify-content: space-between;
 	gap: 1rem;
-	white-space: nowrap;
-}
-
-.tooltip-row .value {
-	color: var(--color-text-primary);
+	color: var(--color-text-secondary);
 }
 
 .tooltip-row .muted {
-	color: var(--color-text-secondary);
+	color: var(--color-text-tertiary);
+}
+
+.tooltip-row .value {
+	font-family: var(--font-mono);
+	color: var(--color-accent);
+}
+
+@theme {
+	/* Background colors - pure black */
+	--color-bg-void: #000000;
+	--color-bg-primary: #050505;
+	--color-bg-elevated: #0a0a0a;
+	--color-bg-card: #0f0f0f;
+	--color-bg-hover: #161616;
+
+	/* Accents - electric blue */
+	--color-accent: #3b82f6;
+	--color-accent-bright: #60a5fa;
+	--color-accent-dim: rgba(59, 130, 246, 0.32);
+
+	--color-accent-2: #93c5fd;
+	--color-accent-2-dim: rgba(147, 197, 253, 0.28);
+
+	/* Text - pure white tones */
+	--color-text-primary: rgba(255, 255, 255, 0.95);
+	--color-text-secondary: rgba(255, 255, 255, 0.7);
+	--color-text-tertiary: rgba(255, 255, 255, 0.45);
+
+	/* Grid */
+	--color-grid-line: rgba(255, 255, 255, 0.04);
+	--color-grid-line-bright: rgba(255, 255, 255, 0.1);
+
+	/* Fonts */
+	--font-display: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+	--font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }

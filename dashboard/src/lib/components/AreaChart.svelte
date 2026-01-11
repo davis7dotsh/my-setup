@@ -14,7 +14,7 @@
 		data,
 		width = 500,
 		height = 200,
-		color = '#3b82f6',
+		color = 'var(--color-accent)',
 		gradientId = 'areaGrad'
 	}: Props = $props();
 
@@ -35,6 +35,13 @@
 		return Math.max(min, Math.min(max, n));
 	}
 
+	function resolveCssColor(value: string) {
+		if (typeof window === 'undefined') return value;
+		const match = value.match(/^var\((--[^)]+)\)$/);
+		if (!match) return value;
+		return getComputedStyle(document.documentElement).getPropertyValue(match[1]).trim() || value;
+	}
+
 	function formatUsd(n: number) {
 		if (n >= 100) return `$${n.toFixed(0)}`;
 		if (n >= 1) return `$${n.toFixed(2)}`;
@@ -46,6 +53,8 @@
 
 		const svg = d3.select(svgElement);
 		svg.selectAll('*').remove();
+
+		const resolvedColor = resolveCssColor(color);
 
 		const margin = { top: 20, right: 20, bottom: 30, left: 50 };
 		const innerWidth = actualWidth - margin.left - margin.right;
@@ -69,12 +78,12 @@
 		gradient
 			.append('stop')
 			.attr('offset', '0%')
-			.attr('stop-color', color)
+			.attr('stop-color', resolvedColor)
 			.attr('stop-opacity', 0.4);
 		gradient
 			.append('stop')
 			.attr('offset', '100%')
-			.attr('stop-color', color)
+			.attr('stop-color', resolvedColor)
 			.attr('stop-opacity', 0);
 
 		// No glow filter (clean theme)
@@ -121,7 +130,7 @@
 				.attr('width', barWidth)
 				.attr('height', 0)
 				.attr('fill', `url(#${gradientId})`)
-				.attr('stroke', color)
+				.attr('stroke', resolvedColor)
 				.attr('stroke-width', 2)
 				.attr('rx', 0)
 				.style('cursor', 'pointer')
@@ -150,10 +159,10 @@
 				.attr('x', centerX)
 				.attr('y', y(d.value) - 15)
 				.attr('text-anchor', 'middle')
-				.attr('fill', color)
+				.attr('fill', resolvedColor)
 				.attr('font-size', '16px')
 				.attr('font-weight', '600')
-				.attr('font-family', 'IBM Plex Mono, monospace')
+				.attr('font-family', 'JetBrains Mono, monospace')
 				.attr('opacity', 0)
 				.text(`$${d.value.toFixed(2)}`)
 				.transition()
@@ -165,7 +174,7 @@
 				.attr('x', centerX)
 				.attr('y', innerHeight + 20)
 				.attr('text-anchor', 'middle')
-				.attr('fill', 'rgba(136, 136, 160, 0.8)')
+				.attr('fill', 'rgba(255, 255, 255, 0.50)')
 				.attr('font-size', '10px')
 				.text(d3.timeFormat('%b %d, %Y')(d.date));
 
@@ -174,7 +183,7 @@
 				.attr('class', 'axis')
 				.call(d3.axisLeft(y).ticks(5).tickFormat(d3.format('$.2s')))
 				.selectAll('text')
-				.attr('fill', 'rgba(136, 136, 160, 0.8)')
+				.attr('fill', 'rgba(255, 255, 255, 0.50)')
 				.attr('font-size', '10px');
 
 			g.selectAll('.domain').attr('stroke', 'rgba(255, 255, 255, 0.10)');
@@ -228,7 +237,7 @@
 			.append('path')
 			.datum(parsedData)
 			.attr('fill', 'none')
-			.attr('stroke', color)
+			.attr('stroke', resolvedColor)
 			.attr('stroke-width', 2)
 
 			.attr('d', line);
@@ -254,14 +263,14 @@
 					.tickFormat((d) => d3.timeFormat('%b %d')(d as Date))
 			)
 			.selectAll('text')
-			.attr('fill', 'rgba(136, 136, 160, 0.8)')
+			.attr('fill', 'rgba(255, 255, 255, 0.50)')
 			.attr('font-size', '10px');
 
 		g.append('g')
 			.attr('class', 'axis')
 			.call(d3.axisLeft(y).ticks(5).tickFormat(d3.format('$.2s')))
 			.selectAll('text')
-			.attr('fill', 'rgba(136, 136, 160, 0.8)')
+			.attr('fill', 'rgba(255, 255, 255, 0.50)')
 			.attr('font-size', '10px');
 
 		// Remove axis domain lines
@@ -276,7 +285,7 @@
 			.attr('cx', (d) => x(d.date))
 			.attr('cy', (d) => y(d.value))
 			.attr('r', 0)
-			.attr('fill', color)
+			.attr('fill', resolvedColor)
 			.style('pointer-events', 'none')
 			.transition()
 			.delay((_, i) => i * 50)
@@ -297,10 +306,10 @@
 			.append('circle')
 			.attr('r', 7)
 			.attr('fill', 'rgba(0, 0, 0, 0.85)')
-			.attr('stroke', color)
+			.attr('stroke', resolvedColor)
 			.attr('stroke-width', 1.5);
 
-		const focusDot = focus.append('circle').attr('r', 3).attr('fill', color);
+		const focusDot = focus.append('circle').attr('r', 3).attr('fill', resolvedColor);
 
 		const bisectDate = d3.bisector((d: { date: Date }) => d.date).left;
 
