@@ -1,82 +1,36 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import AreaChart from '$lib/components/AreaChart.svelte';
 	import BarChart from '$lib/components/BarChart.svelte';
 	import DonutChart from '$lib/components/DonutChart.svelte';
 	import TokensChart from '$lib/components/TokensChart.svelte';
 	import TokensZoomChart from '$lib/components/TokensZoomChart.svelte';
+	import {
+		getTotals,
+		getCostByModel,
+		getCostOverTime,
+		getTokensData,
+		getAgentBreakdown,
+		getModelPerformance,
+		getRecentRequests
+	} from './data.remote';
 
-	interface Stats {
-		totals: {
-			total_requests: number;
-			total_input: number;
-			total_output: number;
-			total_reasoning: number;
-			total_cache_read: number;
-			total_cache_write: number;
-			total_cost: number;
-		};
-		costByModel: {
-			model_id: string;
-			provider_id: string;
-			request_count: number;
-			tokens_input: number;
-			tokens_output: number;
-			cost_usd: number;
-		}[];
-		usageByHour: { hour: number; request_count: number; cost_usd: number }[];
-		tokensByHourToday: { hour: number; tokens_input: number; tokens_output: number }[];
-		tokensByDay: { date: string; tokens_input: number; tokens_output: number }[];
-		usageByDayOfWeek: { day_of_week: number; request_count: number; cost_usd: number }[];
-		costOverTime: {
-			date: string;
-			request_count: number;
-			tokens_input: number;
-			tokens_output: number;
-			cost_usd: number;
-		}[];
-		agentBreakdown: {
-			agent: string;
-			request_count: number;
-			tokens_input: number;
-			tokens_output: number;
-			cost_usd: number;
-		}[];
-		avgDurationByModel: { model_id: string; avg_duration_ms: number; request_count: number }[];
-		recentRequests: {
-			id: number;
-			model_id: string;
-			tokens_input: number;
-			tokens_output: number;
-			cost_usd: number;
-			created_at: string;
-		}[];
-	}
-
-	let stats: Stats | null = $state(null);
-	let loading = $state(true);
-	let error = $state<string | null>(null);
 	let currentTime = $state(new Date().toLocaleTimeString());
 
-	onMount(() => {
-		fetchStats();
-		// Update time every second
+	$effect(() => {
 		const interval = setInterval(() => {
 			currentTime = new Date().toLocaleTimeString();
 		}, 1000);
 		return () => clearInterval(interval);
 	});
 
-	async function fetchStats() {
-		try {
-			const res = await fetch('/api/stats');
-			if (!res.ok) throw new Error('Failed to fetch stats');
-			stats = await res.json();
-		} catch (e) {
-			error = e instanceof Error ? e.message : 'Unknown error';
-		} finally {
-			loading = false;
-		}
+	function refreshAll() {
+		getTotals().refresh();
+		getCostByModel().refresh();
+		getCostOverTime().refresh();
+		getTokensData().refresh();
+		getAgentBreakdown().refresh();
+		getModelPerformance().refresh();
+		getRecentRequests().refresh();
 	}
 
 	function formatNumber(n: number): string {
@@ -92,7 +46,6 @@
 	}
 
 	function getModelShortName(model: string): string {
-		// Extract meaningful part of model name
 		const parts = model.split('/');
 		const name = parts[parts.length - 1];
 		if (name.length > 20) return name.slice(0, 20) + '...';
@@ -103,34 +56,21 @@
 		if (ms >= 1000) return (ms / 1000).toFixed(1) + 's';
 		return ms.toFixed(0) + 'ms';
 	}
-
-	// Derived data for charts
-	let costTimeData = $derived.by(() => {
-		if (!stats) return [];
-		return stats.costOverTime.map((d) => ({ date: d.date, value: d.cost_usd }));
-	});
-
-	let modelCostData = $derived.by(() => {
-		if (!stats) return [];
-		return stats.costByModel
-			.slice(0, 8)
-			.map((d) => ({ label: getModelShortName(d.model_id), value: d.cost_usd }));
-	});
-
-	let agentCostData = $derived.by(() => {
-		if (!stats) return [];
-		return stats.agentBreakdown.map((d) => ({ label: d.agent || 'unknown', value: d.cost_usd }));
-	});
-
-	let tokensTimeData = $derived.by(() => {
-		if (!stats) return [];
-		return stats.costOverTime.map((d) => ({
-			date: d.date,
-			tokens_input: d.tokens_input,
-			tokens_output: d.tokens_output
-		}));
-	});
 </script>
+
+{#snippet loadingState()}
+	<div class="loading-skeleton">
+		<div class="skeleton-bar"></div>
+		<div class="skeleton-bar short"></div>
+	</div>
+{/snippet}
+
+{#snippet errorState(error: unknown, retry: () => void)}
+	<div class="error-inline">
+		<span class="error-text">Failed to load</span>
+		<button onclick={retry} class="retry-btn-small">Retry</button>
+	</div>
+{/snippet}
 
 <div class="dashboard">
 	<!-- Header -->
@@ -145,76 +85,162 @@
 		</div>
 		<div class="header-right">
 			<div class="clock">{currentTime}</div>
-			<button onclick={fetchStats} class="refresh-btn">
+			<button onclick={refreshAll} class="refresh-btn">
 				<span class="refresh-icon">↻</span> REFRESH
 			</button>
 		</div>
 	</header>
 
-	{#if loading}
-		<div class="loading">LOADING DATA</div>
-	{:else if error}
-		<div class="error-state">
-			<div class="error-icon">!</div>
-			<p>ERROR: {error}</p>
-			<button onclick={fetchStats}>RETRY</button>
-		</div>
-	{:else if stats}
-		<!-- Main Stats Row -->
-		<section class="stats-grid">
+	<!-- Main Stats Row -->
+	<section class="stats-grid">
+		<svelte:boundary>
+			{#snippet pending()}
+				<div class="stat-card primary">
+					<div class="stat-value loading-pulse">--</div>
+					<div class="stat-label">TOTAL SPENT</div>
+				</div>
+				<div class="stat-card">
+					<div class="stat-value cyan loading-pulse">--</div>
+					<div class="stat-label">TOTAL REQUESTS</div>
+				</div>
+				<div class="stat-card">
+					<div class="stat-value magenta loading-pulse">--</div>
+					<div class="stat-label">INPUT TOKENS</div>
+				</div>
+				<div class="stat-card">
+					<div class="stat-value amber loading-pulse">--</div>
+					<div class="stat-label">OUTPUT TOKENS</div>
+				</div>
+			{/snippet}
+			{#snippet failed(error, retry)}
+				<div class="stat-card primary error-card">
+					{@render errorState(error, retry)}
+				</div>
+			{/snippet}
+			{@const totals = await getTotals()}
 			<div class="stat-card primary">
-				<div class="stat-value">{formatCost(stats.totals.total_cost)}</div>
+				<div class="stat-value">{formatCost(totals.total_cost)}</div>
 				<div class="stat-label">TOTAL SPENT</div>
 				<div class="stat-decoration"></div>
 			</div>
 			<div class="stat-card">
-				<div class="stat-value cyan">{formatNumber(stats.totals.total_requests)}</div>
+				<div class="stat-value cyan">{formatNumber(totals.total_requests)}</div>
 				<div class="stat-label">TOTAL REQUESTS</div>
 			</div>
 			<div class="stat-card">
-				<div class="stat-value magenta">{formatNumber(stats.totals.total_input)}</div>
+				<div class="stat-value magenta">{formatNumber(totals.total_input)}</div>
 				<div class="stat-label">INPUT TOKENS</div>
 			</div>
 			<div class="stat-card">
-				<div class="stat-value amber">{formatNumber(stats.totals.total_output)}</div>
+				<div class="stat-value amber">{formatNumber(totals.total_output)}</div>
 				<div class="stat-label">OUTPUT TOKENS</div>
 			</div>
-		</section>
+		</svelte:boundary>
+	</section>
 
-		<!-- Charts Row 1 -->
-		<section class="charts-row">
-			<div class="chart-card wide">
-				<h2>COST OVER TIME</h2>
+	<!-- Charts Row 1 -->
+	<section class="charts-row">
+		<div class="chart-card wide">
+			<h2>COST OVER TIME</h2>
+			<svelte:boundary>
+				{#snippet pending()}
+					{@render loadingState()}
+				{/snippet}
+				{#snippet failed(error, retry)}
+					{@render errorState(error, retry)}
+				{/snippet}
+				{@const costOverTime = await getCostOverTime()}
+				{@const costTimeData = costOverTime.map((d) => ({ date: d.date, value: d.cost_usd }))}
 				<AreaChart data={costTimeData} height={220} color="#3b82f6" gradientId="costGrad" />
-			</div>
-			<div class="chart-card">
-				<h2>COST BY MODEL</h2>
+			</svelte:boundary>
+		</div>
+		<div class="chart-card">
+			<h2>COST BY MODEL</h2>
+			<svelte:boundary>
+				{#snippet pending()}
+					{@render loadingState()}
+				{/snippet}
+				{#snippet failed(error, retry)}
+					{@render errorState(error, retry)}
+				{/snippet}
+				{@const costByModel = await getCostByModel()}
+				{@const modelCostData = costByModel
+					.slice(0, 8)
+					.map((d) => ({ label: getModelShortName(d.model_id), value: d.cost_usd }))}
 				<DonutChart data={modelCostData} height={280} />
-			</div>
-		</section>
+			</svelte:boundary>
+		</div>
+	</section>
 
-		<!-- Charts Row 2 -->
-		<section class="charts-row">
-			<div class="chart-card wide">
-				<h2>TOKEN FLOW</h2>
+	<!-- Charts Row 2 -->
+	<section class="charts-row">
+		<div class="chart-card wide">
+			<h2>TOKEN FLOW</h2>
+			<svelte:boundary>
+				{#snippet pending()}
+					{@render loadingState()}
+				{/snippet}
+				{#snippet failed(error, retry)}
+					{@render errorState(error, retry)}
+				{/snippet}
+				{@const costOverTime = await getCostOverTime()}
+				{@const tokensTimeData = costOverTime.map((d) => ({
+					date: d.date,
+					tokens_input: d.tokens_input,
+					tokens_output: d.tokens_output
+				}))}
 				<TokensChart data={tokensTimeData} height={220} />
-			</div>
-			<div class="chart-card">
-				<h2>COST BY AGENT</h2>
+			</svelte:boundary>
+		</div>
+		<div class="chart-card">
+			<h2>COST BY AGENT</h2>
+			<svelte:boundary>
+				{#snippet pending()}
+					{@render loadingState()}
+				{/snippet}
+				{#snippet failed(error, retry)}
+					{@render errorState(error, retry)}
+				{/snippet}
+				{@const agentBreakdown = await getAgentBreakdown()}
+				{@const agentCostData = agentBreakdown.map((d) => ({
+					label: d.agent || 'unknown',
+					value: d.cost_usd
+				}))}
 				<BarChart data={agentCostData} height={220} color="#3b82f6" horizontal={true} />
-			</div>
-		</section>
+			</svelte:boundary>
+		</div>
+	</section>
 
-		<!-- Tokens explorer (replaces heatmap) -->
-		<section class="charts-row single">
-			<div class="chart-card full">
-				<TokensZoomChart hourly={stats.tokensByHourToday} daily={stats.tokensByDay} height={220} />
-			</div>
-		</section>
+	<!-- Tokens explorer -->
+	<section class="charts-row single">
+		<div class="chart-card full">
+			<svelte:boundary>
+				{#snippet pending()}
+					<h2>TOKENS EXPLORER</h2>
+					{@render loadingState()}
+				{/snippet}
+				{#snippet failed(error, retry)}
+					<h2>TOKENS EXPLORER</h2>
+					{@render errorState(error, retry)}
+				{/snippet}
+				{@const tokensData = await getTokensData()}
+				<TokensZoomChart hourly={tokensData.hourly} daily={tokensData.daily} height={220} />
+			</svelte:boundary>
+		</div>
+	</section>
 
-		<!-- Model Performance Table -->
-		<section class="table-section">
-			<h2>MODEL PERFORMANCE</h2>
+	<!-- Model Performance Table -->
+	<section class="table-section">
+		<h2>MODEL PERFORMANCE</h2>
+		<svelte:boundary>
+			{#snippet pending()}
+				{@render loadingState()}
+			{/snippet}
+			{#snippet failed(error, retry)}
+				{@render errorState(error, retry)}
+			{/snippet}
+			{@const costByModel = await getCostByModel()}
+			{@const modelPerformance = await getModelPerformance()}
 			<div class="table-wrapper">
 				<table>
 					<thead>
@@ -228,10 +254,8 @@
 						</tr>
 					</thead>
 					<tbody>
-						{#each stats.costByModel as model}
-							{@const avgDuration = stats.avgDurationByModel.find(
-								(d) => d.model_id === model.model_id
-							)}
+						{#each costByModel as model}
+							{@const avgDuration = modelPerformance.find((d) => d.model_id === model.model_id)}
 							<tr>
 								<td class="model-name">
 									<span class="provider-tag">{model.provider_id}</span>
@@ -247,11 +271,20 @@
 					</tbody>
 				</table>
 			</div>
-		</section>
+		</svelte:boundary>
+	</section>
 
-		<!-- Recent Activity -->
-		<section class="table-section">
-			<h2>RECENT ACTIVITY</h2>
+	<!-- Recent Activity -->
+	<section class="table-section">
+		<h2>RECENT ACTIVITY</h2>
+		<svelte:boundary>
+			{#snippet pending()}
+				{@render loadingState()}
+			{/snippet}
+			{#snippet failed(error, retry)}
+				{@render errorState(error, retry)}
+			{/snippet}
+			{@const recentRequests = await getRecentRequests()}
 			<div class="table-wrapper recent">
 				<table>
 					<thead>
@@ -264,7 +297,7 @@
 						</tr>
 					</thead>
 					<tbody>
-						{#each stats.recentRequests.slice(0, 15) as req}
+						{#each recentRequests.slice(0, 15) as req}
 							<tr>
 								<td class="time-cell">
 									{new Date(req.created_at).toLocaleString(undefined, {
@@ -283,22 +316,41 @@
 					</tbody>
 				</table>
 			</div>
-		</section>
+		</svelte:boundary>
+	</section>
 
-		<!-- Footer -->
-		<footer class="footer">
+	<!-- Footer -->
+	<footer class="footer">
+		<svelte:boundary>
+			{#snippet pending()}
+				<div class="footer-stats">
+					<span>Cache Read: --</span>
+					<span class="separator">|</span>
+					<span>Cache Write: --</span>
+					<span class="separator">|</span>
+					<span>Reasoning: --</span>
+				</div>
+			{/snippet}
+			{#snippet failed()}
+				<div class="footer-stats">
+					<span>Cache Read: --</span>
+					<span class="separator">|</span>
+					<span>Cache Write: --</span>
+					<span class="separator">|</span>
+					<span>Reasoning: --</span>
+				</div>
+			{/snippet}
+			{@const totals = await getTotals()}
 			<div class="footer-stats">
-				<span>Cache Read: {formatNumber(stats.totals.total_cache_read)}</span>
+				<span>Cache Read: {formatNumber(totals.total_cache_read)}</span>
 				<span class="separator">|</span>
-				<span>Cache Write: {formatNumber(stats.totals.total_cache_write)}</span>
+				<span>Cache Write: {formatNumber(totals.total_cache_write)}</span>
 				<span class="separator">|</span>
-				<span>Reasoning: {formatNumber(stats.totals.total_reasoning)}</span>
+				<span>Reasoning: {formatNumber(totals.total_reasoning)}</span>
 			</div>
-			<div class="footer-brand">
-				OPENCODE STATS v1.0
-			</div>
-		</footer>
-	{/if}
+		</svelte:boundary>
+		<div class="footer-brand">OPENCODE STATS v1.0</div>
+	</footer>
 </div>
 
 <style>
@@ -348,25 +400,6 @@
 		margin-left: 0.25rem;
 	}
 
-	.status {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-	}
-
-	.status-dot {
-		width: 8px;
-		height: 8px;
-		background: var(--accent);
-		border: 1px solid rgba(255, 255, 255, 0.18);
-	}
-
-	.status-text {
-		font-size: 0.7rem;
-		color: var(--text-secondary);
-		letter-spacing: 0.1em;
-	}
-
 	.header-right {
 		display: flex;
 		align-items: center;
@@ -387,6 +420,86 @@
 
 	.refresh-icon {
 		font-size: 1rem;
+	}
+
+	/* Loading states */
+	.loading-skeleton {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+		padding: 1rem 0;
+	}
+
+	.skeleton-bar {
+		height: 1.5rem;
+		background: linear-gradient(
+			90deg,
+			var(--bg-card) 0%,
+			var(--grid-line-bright) 50%,
+			var(--bg-card) 100%
+		);
+		background-size: 200% 100%;
+		animation: shimmer 1.5s infinite;
+		border-radius: 4px;
+	}
+
+	.skeleton-bar.short {
+		width: 60%;
+	}
+
+	@keyframes shimmer {
+		0% {
+			background-position: 200% 0;
+		}
+		100% {
+			background-position: -200% 0;
+		}
+	}
+
+	.loading-pulse {
+		animation: pulse 1.5s ease-in-out infinite;
+	}
+
+	@keyframes pulse {
+		0%,
+		100% {
+			opacity: 1;
+		}
+		50% {
+			opacity: 0.4;
+		}
+	}
+
+	.error-inline {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		padding: 0.5rem;
+		color: var(--accent);
+	}
+
+	.error-text {
+		font-size: 0.85rem;
+	}
+
+	.retry-btn-small {
+		font-size: 0.75rem;
+		padding: 0.25rem 0.5rem;
+		background: transparent;
+		border: 1px solid var(--accent-dim);
+		color: var(--text-secondary);
+		cursor: pointer;
+	}
+
+	.retry-btn-small:hover {
+		border-color: var(--accent);
+		color: var(--accent);
+	}
+
+	.error-card {
+		display: flex;
+		align-items: center;
+		justify-content: center;
 	}
 
 	/* Stats Grid */
@@ -543,28 +656,6 @@
 
 	.footer-brand {
 		letter-spacing: 0.15em;
-	}
-
-	/* Error state */
-	.error-state {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		min-height: 400px;
-		gap: 1rem;
-	}
-
-	.error-icon {
-		width: 60px;
-		height: 60px;
-		border: 1px solid var(--accent);
-		border-radius: 0;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-size: 2rem;
-		color: var(--accent);
 	}
 
 	/* Responsive */

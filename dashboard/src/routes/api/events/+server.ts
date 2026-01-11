@@ -3,8 +3,7 @@ import type { RequestHandler } from "./$types";
 import { db } from "$lib/server/db";
 import { requests, sessions, dailySummary } from "$lib/db/schema";
 import { eq, and, sql } from "drizzle-orm";
-
-const API_KEY = process.env.API_KEY;
+import { env } from "$env/dynamic/private";
 
 interface AgentEvent {
   messageId: string;
@@ -37,7 +36,7 @@ export const POST: RequestHandler = async ({ request }) => {
   }
 
   const providedKey = authHeader.slice(7);
-  if (providedKey !== API_KEY) {
+  if (providedKey !== env.API_KEY) {
     return json({ error: "Invalid API key" }, { status: 403 });
   }
 
@@ -49,7 +48,12 @@ export const POST: RequestHandler = async ({ request }) => {
   }
 
   // Validate required fields
-  if (!event.messageId || !event.sessionId || !event.providerId || !event.modelId) {
+  if (
+    !event.messageId ||
+    !event.sessionId ||
+    !event.providerId ||
+    !event.modelId
+  ) {
     return json({ error: "Missing required fields" }, { status: 400 });
   }
 
@@ -70,10 +74,14 @@ export const POST: RequestHandler = async ({ request }) => {
 
       // Calculate deltas for summary updates
       const deltaInput = event.tokens.input - (existingRecord.tokensInput || 0);
-      const deltaOutput = event.tokens.output - (existingRecord.tokensOutput || 0);
-      const deltaReasoning = event.tokens.reasoning - (existingRecord.tokensReasoning || 0);
-      const deltaCacheRead = event.tokens.cache.read - (existingRecord.tokensCacheRead || 0);
-      const deltaCacheWrite = event.tokens.cache.write - (existingRecord.tokensCacheWrite || 0);
+      const deltaOutput =
+        event.tokens.output - (existingRecord.tokensOutput || 0);
+      const deltaReasoning =
+        event.tokens.reasoning - (existingRecord.tokensReasoning || 0);
+      const deltaCacheRead =
+        event.tokens.cache.read - (existingRecord.tokensCacheRead || 0);
+      const deltaCacheWrite =
+        event.tokens.cache.write - (existingRecord.tokensCacheWrite || 0);
       const deltaCost = event.cost - (existingRecord.costUsd || 0);
 
       // Update existing request
@@ -184,7 +192,11 @@ export const POST: RequestHandler = async ({ request }) => {
           costUsd: event.cost,
         })
         .onConflictDoUpdate({
-          target: [dailySummary.date, dailySummary.providerId, dailySummary.modelId],
+          target: [
+            dailySummary.date,
+            dailySummary.providerId,
+            dailySummary.modelId,
+          ],
           set: {
             requestCount: sql`${dailySummary.requestCount} + 1`,
             tokensInput: sql`${dailySummary.tokensInput} + ${event.tokens.input}`,
