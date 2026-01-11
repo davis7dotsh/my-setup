@@ -56,7 +56,7 @@
 
 		const resolvedColor = resolveCssColor(color);
 
-		const margin = { top: 20, right: 20, bottom: 30, left: 50 };
+		const margin = { top: 35, right: 20, bottom: 30, left: 50 };
 		const innerWidth = actualWidth - margin.left - margin.right;
 		const innerHeight = height - margin.top - margin.bottom;
 
