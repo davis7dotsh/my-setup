@@ -1,0 +1,90 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "keybinds": {
+    "leader": "ctrl+cmd+left_shift+option+x",
+    "session_child_cycle": "<leader>]",
+    "session_child_cycle_reverse": "<leader>["
+  },
+  "provider": {
+    "opencode": {
+      "models": {
+        "gemini-3-flash": {
+          "options": {
+            "generationConfig": {
+              "thinkingConfig": {
+                "thinkingLevel": "low"
+              }
+            }
+          }
+        },
+        "claude-haiku-4-5": {
+          "id": "claude-haiku-4-5",
+          "options": {
+            "max_tokens": 16384,
+            "thinking": {
+              "type": "enabled",
+              "budgetTokens": 4096
+            }
+          }
+        }
+      }
+    },
+    "openrouter": {
+      "models": {
+        "openai/gpt-5.2": {
+          "options": {
+            "reasoningEffort": "low"
+          }
+        }
+      }
+    }
+  },
+  "agent": {
+    "build": {
+      "color": "#00FFFF",
+      "permission": {
+        "bash": "allow",
+        "external_directory": "ask",
+        "webfetch": "ask",
+        "edit": "allow",
+        "doom_loop": "ask"
+      },
+      "tools": {
+        "bash": true,
+        "edit": true,
+        "write": true,
+        "read": true,
+        "grep": true,
+        "glob": true,
+        "list": true,
+        "patch": true,
+        "todowrite": true,
+        "todoread": true,
+        "webfetch": true
+      }
+    },
+    "plan": {
+      "color": "#FFFF00",
+      "permission": {
+        "bash": "allow",
+        "external_directory": "ask",
+        "webfetch": "ask",
+        "edit": "ask",
+        "doom_loop": "ask"
+      },
+      "tools": {
+        "bash": true,
+        "edit": false,
+        "write": true,
+        "read": true,
+        "grep": true,
+        "glob": true,
+        "list": true,
+        "patch": false,
+        "todowrite": true,
+        "todoread": true,
+        "webfetch": true
+      }
+    }
+  }
+}

@@ -1,0 +1,344 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap');
+
+:root {
+	/* Monochrome base */
+	--bg-void: #000000;
+	--bg-primary: #050506;
+	--bg-elevated: #0b0b0d;
+	--bg-card: #0f0f12;
+	--bg-hover: #15151a;
+
+	/* Single accent (blue) */
+	--accent: #3b82f6;
+	--accent-bright: #60a5fa;
+	--accent-dim: rgba(59, 130, 246, 0.35);
+
+	/* Backwards-compatible names (keep existing components working) */
+	--green-glow: var(--accent);
+	--green-bright: var(--accent-bright);
+	--green-muted: rgba(96, 165, 250, 0.8);
+	--green-dim: var(--accent-dim);
+
+	--cyan-glow: var(--accent);
+	--magenta-glow: rgba(255, 255, 255, 0.92);
+	--amber-glow: rgba(255, 255, 255, 0.78);
+	--red-glow: var(--accent);
+
+	/* Text hierarchy */
+	--text-primary: rgba(255, 255, 255, 0.92);
+	--text-secondary: rgba(255, 255, 255, 0.68);
+	--text-tertiary: rgba(255, 255, 255, 0.45);
+	--text-accent: var(--accent);
+
+	/* Grid lines */
+	--grid-line: rgba(255, 255, 255, 0.035);
+	--grid-line-bright: rgba(255, 255, 255, 0.085);
+
+	/* Shadows (intentionally minimal) */
+	--glow-green: none;
+	--glow-cyan: none;
+	--glow-magenta: none;
+
+	/* Sizing (no rounded corners) */
+	--radius-sm: 0px;
+	--radius-md: 0px;
+	--radius-lg: 0px;
+}
+
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+}
+
+html {
+	font-size: 14px;
+	scroll-behavior: smooth;
+}
+
+body {
+	font-family: 'IBM Plex Mono', 'SF Mono', Consolas, monospace;
+	background: var(--bg-void);
+	color: var(--text-primary);
+	line-height: 1.6;
+	min-height: 100vh;
+	overflow-x: hidden;
+}
+
+/* Previously: scanline overlay (kept clean now) */
+body::before {
+	display: none;
+	content: '';
+}
+
+/* Grid background */
+body::after {
+	content: '';
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background-image: linear-gradient(var(--grid-line) 1px, transparent 1px),
+		linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+	background-size: 40px 40px;
+	pointer-events: none;
+	z-index: -1;
+}
+
+::selection {
+	background: var(--accent);
+	color: var(--bg-void);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+	width: 8px;
+	height: 8px;
+}
+
+::-webkit-scrollbar-track {
+	background: var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+	background: rgba(255, 255, 255, 0.18);
+	border-radius: 0;
+}
+
+::-webkit-scrollbar-thumb:hover {
+	background: rgba(59, 130, 246, 0.45);
+}
+
+/* Typography */
+h1,
+h2,
+h3,
+h4 {
+	font-family: 'IBM Plex Mono', 'SF Mono', Consolas, monospace;
+	font-weight: 600;
+	letter-spacing: 0.02em;
+}
+
+h1 {
+	font-size: 2.5rem;
+	font-weight: 700;
+}
+
+h2 {
+	font-size: 1.25rem;
+	font-weight: 500;
+	color: var(--text-secondary);
+	text-transform: uppercase;
+	letter-spacing: 0.15em;
+}
+
+/* Links */
+a {
+	color: var(--accent-bright);
+	text-decoration: none;
+	transition: color 0.2s ease;
+}
+
+a:hover {
+	color: var(--accent);
+}
+
+/* Cards */
+.card {
+	background: var(--bg-card);
+	border: 1px solid var(--grid-line-bright);
+	border-radius: var(--radius-md);
+	padding: 1.5rem;
+	position: relative;
+	overflow: hidden;
+}
+
+.card::before {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	height: 1px;
+	background: linear-gradient(90deg, transparent, var(--green-dim), transparent);
+}
+
+/* Stat numbers */
+.stat-value {
+	font-family: inherit;
+	font-size: 2.5rem;
+	font-weight: 700;
+	color: var(--green-glow);
+	text-shadow: none;
+	line-height: 1;
+}
+
+.stat-value.cyan {
+	color: var(--cyan-glow);
+	text-shadow: none;
+}
+
+.stat-value.magenta {
+	color: var(--magenta-glow);
+	text-shadow: none;
+}
+
+.stat-value.amber {
+	color: var(--amber-glow);
+	text-shadow: none;
+}
+
+.stat-label {
+	font-size: 0.75rem;
+	color: var(--text-tertiary);
+	text-transform: uppercase;
+	letter-spacing: 0.1em;
+	margin-top: 0.5rem;
+}
+
+/* Buttons */
+button {
+	font-family: inherit;
+	background: var(--bg-elevated);
+	border: 1px solid var(--green-dim);
+	color: var(--green-bright);
+	padding: 0.5rem 1rem;
+	border-radius: var(--radius-sm);
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+
+button:hover {
+	background: var(--green-dim);
+	border-color: var(--green-bright);
+	box-shadow: var(--glow-green);
+}
+
+/* Tables */
+table {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+th,
+td {
+	text-align: left;
+	padding: 0.75rem;
+	border-bottom: 1px solid var(--grid-line-bright);
+}
+
+th {
+	color: var(--text-tertiary);
+	font-weight: 500;
+	text-transform: uppercase;
+	font-size: 0.7rem;
+	letter-spacing: 0.1em;
+}
+
+tr:hover td {
+	background: var(--bg-hover);
+}
+
+/* SVG Charts */
+.chart-container {
+	position: relative;
+}
+
+.chart-container svg {
+	overflow: visible;
+	display: block;
+}
+
+.chart-container text {
+	font-family: 'IBM Plex Mono', monospace;
+	fill: var(--text-secondary);
+	font-size: 10px;
+}
+
+.chart-container .axis line,
+.chart-container .axis path {
+	stroke: var(--grid-line-bright);
+}
+
+.chart-container .grid line {
+	stroke: var(--grid-line);
+}
+
+/* Animations */
+@keyframes pulse-glow {
+	0%,
+	100% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 0.7;
+	}
+}
+
+@keyframes scan {
+	0% {
+		transform: translateY(-100%);
+	}
+	100% {
+		transform: translateY(100vh);
+	}
+}
+
+.animate-glow {
+	animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Loading state */
+.loading {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 200px;
+	color: var(--text-tertiary);
+}
+
+.loading::after {
+	content: '█';
+	animation: pulse-glow 0.5s ease-in-out infinite;
+	margin-left: 0.5rem;
+	color: var(--green-glow);
+}
+
+/* Tooltip */
+.tooltip {
+	position: absolute;
+	background: rgba(0, 0, 0, 0.92);
+	border: 1px solid var(--grid-line-bright);
+	padding: 0.6rem 0.75rem;
+	border-radius: var(--radius-sm);
+	font-size: 0.75rem;
+	pointer-events: none;
+	z-index: 1000;
+	box-shadow: none;
+	backdrop-filter: blur(6px);
+	min-width: 160px;
+}
+
+.tooltip-title {
+	color: var(--text-tertiary);
+	font-size: 0.65rem;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	margin-bottom: 0.35rem;
+}
+
+.tooltip-row {
+	display: flex;
+	justify-content: space-between;
+	gap: 1rem;
+	white-space: nowrap;
+}
+
+.tooltip-row .value {
+	color: var(--text-primary);
+}
+
+.tooltip-row .muted {
+	color: var(--text-secondary);
+}
