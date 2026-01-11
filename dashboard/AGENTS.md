@@ -19,7 +19,7 @@ Use **remote functions** from `$lib/remote/*.remote.ts` to fetch and mutate data
 
 ## Styling
 
-Use **Tailwind CSS** for all styling. Do not use inline styles or separate CSS files for component styles.
+Use **plain CSS** in `src/routes/layout.css` for all styling. CSS custom properties are defined in `:root` for theming. Do not use Tailwind or other CSS frameworks.
 
 ## Svelte 5 Features
 

@@ -64,142 +64,100 @@
 </script>
 
 {#snippet loadingState()}
-	<div class="flex flex-col gap-2 py-4">
-		<div class="h-6 rounded animate-shimmer"></div>
-		<div class="h-6 w-3/5 rounded animate-shimmer"></div>
+	<div class="loading-skeleton">
+		<div class="skeleton-line"></div>
+		<div class="skeleton-line short"></div>
 	</div>
 {/snippet}
 
 {#snippet errorState(error: unknown, retry: () => void)}
-	<div class="flex items-center gap-3 p-2 text-accent">
+	<div class="error-state">
 		<span class="text-sm">Failed to load</span>
-		<button
-			onclick={retry}
-			class="text-xs px-2 py-1 bg-transparent border border-accent-dim text-text-secondary hover:border-accent hover:text-text-primary cursor-pointer"
-			>Retry</button
-		>
+		<button onclick={retry} class="retry-btn">Retry</button>
 	</div>
 {/snippet}
 
-<div class="min-h-screen p-4 max-w-[1600px] mx-auto sm:p-6">
+<div class="page-container">
 	<!-- Header -->
-	<header
-		class="panel panel-accent reveal flex flex-col gap-4 mb-8 p-4 overflow-hidden sm:flex-row sm:justify-between sm:items-center sm:p-6"
-		style="animation-delay: 40ms;"
-	>
-		<div class="flex flex-col gap-2">
-			<div class="text-[0.65rem] tracking-[0.32em] uppercase text-text-tertiary">
-				telemetry / tokens / cost
-			</div>
-			<h1 class="text-3xl leading-[0.95] sm:text-4xl">
-				OpenCode <span class="text-accent">Observatory</span>
+	<header class="header reveal" style="animation-delay: 40ms;">
+		<div class="header-left">
+			<div class="header-breadcrumb">telemetry / tokens / cost</div>
+			<h1 class="header-title">
+				OpenCode <span class="accent">Observatory</span>
 			</h1>
-			<div class="text-xs text-text-secondary max-w-[72ch]">
-				A tiny instrument panel for OpenCode’s LLM usage.
+			<div class="header-subtitle">
+				A tiny instrument panel for OpenCode's LLM usage.
 			</div>
 		</div>
 
-		<div class="flex items-center justify-between gap-4 sm:gap-6">
-			<div class="flex flex-col items-end">
-				<div class="text-[0.65rem] tracking-[0.32em] uppercase text-text-tertiary">local time</div>
-				<div class="text-lg text-text-secondary tabular-nums sm:text-2xl">{currentTime}</div>
+		<div class="header-right">
+			<div class="time-display">
+				<div class="time-label">local time</div>
+				<div class="time-value">{currentTime}</div>
 			</div>
 			<button onclick={refreshAll} class="btn">
-				<span class="text-base">↻</span> <span class="hidden xs:inline">refresh</span>
+				<span>↻</span> <span class="hidden xs:inline">refresh</span>
 			</button>
 		</div>
 	</header>
 
 	<!-- Main Stats Row -->
-	<section
-		class="grid grid-cols-1 gap-4 mb-6 sm:grid-cols-2 lg:grid-cols-4"
-		aria-label="Top-level totals"
-	>
+	<section class="stats-grid" aria-label="Top-level totals">
 		<svelte:boundary>
 			{#snippet pending()}
-				<div class="panel reveal p-4 sm:p-6" style="animation-delay: 80ms;">
-					<div class="text-2xl sm:text-4xl font-bold text-accent leading-none animate-pulse-custom">
-						--
-					</div>
-					<div class="text-xs text-text-tertiary uppercase tracking-widest mt-2">total spent</div>
+				<div class="panel reveal" style="animation-delay: 80ms;">
+					<div class="stat-value accent pulse">--</div>
+					<div class="stat-label">total spent</div>
 				</div>
-				<div class="panel reveal p-4 sm:p-6" style="animation-delay: 110ms;">
-					<div class="text-2xl sm:text-4xl font-bold text-accent leading-none animate-pulse-custom">
-						--
-					</div>
-					<div class="text-xs text-text-tertiary uppercase tracking-widest mt-2">
-						total requests
-					</div>
+				<div class="panel reveal" style="animation-delay: 110ms;">
+					<div class="stat-value accent pulse">--</div>
+					<div class="stat-label">total requests</div>
 				</div>
-				<div class="panel reveal p-4 sm:p-6" style="animation-delay: 140ms;">
-					<div
-						class="text-2xl sm:text-4xl font-bold text-text-primary leading-none animate-pulse-custom"
-					>
-						--
-					</div>
-					<div class="text-xs text-text-tertiary uppercase tracking-widest mt-2">input tokens</div>
-					<div class="mt-2 text-[0.65rem] text-text-tertiary uppercase tracking-[0.18em]">
-						cached --
-					</div>
+				<div class="panel reveal" style="animation-delay: 140ms;">
+					<div class="stat-value primary pulse">--</div>
+					<div class="stat-label">input tokens</div>
+					<div class="stat-sublabel">cached --</div>
 				</div>
-				<div class="panel reveal p-4 sm:p-6" style="animation-delay: 170ms;">
-					<div
-						class="text-2xl sm:text-4xl font-bold text-text-secondary leading-none animate-pulse-custom"
-					>
-						--
-					</div>
-					<div class="text-xs text-text-tertiary uppercase tracking-widest mt-2">output tokens</div>
+				<div class="panel reveal" style="animation-delay: 170ms;">
+					<div class="stat-value secondary pulse">--</div>
+					<div class="stat-label">output tokens</div>
 				</div>
 			{/snippet}
 			{#snippet failed(error, retry)}
-				<div class="panel p-4 sm:p-6 flex items-center justify-center">
+				<div class="panel flex items-center justify-center">
 					{@render errorState(error, retry)}
 				</div>
 			{/snippet}
 			{@const totals = await getTotals()}
 			{@const totalPrompt = totals.total_input + totals.total_cache_read}
-			<div class="panel panel-accent reveal p-4 sm:p-6" style="animation-delay: 80ms;">
-				<div class="text-2xl sm:text-4xl font-bold text-accent leading-none">
-					{formatCost(totals.total_cost)}
-				</div>
-				<div class="text-xs text-text-tertiary uppercase tracking-widest mt-2">total spent</div>
-				<div
-					class="absolute -bottom-7 -right-8 w-[140px] h-[140px] bg-[radial-gradient(circle,rgba(59,130,246,0.18)_0%,transparent_65%)] pointer-events-none"
-				></div>
+			<div class="panel reveal" style="animation-delay: 80ms;">
+				<div class="stat-value accent">{formatCost(totals.total_cost)}</div>
+				<div class="stat-label">total spent</div>
+				<div class="panel-glow"></div>
 			</div>
-			<div class="panel reveal p-4 sm:p-6" style="animation-delay: 110ms;">
-				<div class="text-2xl sm:text-4xl font-bold text-accent leading-none">
-					{formatNumber(totals.total_requests)}
-				</div>
-				<div class="text-xs text-text-tertiary uppercase tracking-widest mt-2">total requests</div>
+			<div class="panel reveal" style="animation-delay: 110ms;">
+				<div class="stat-value accent">{formatNumber(totals.total_requests)}</div>
+				<div class="stat-label">total requests</div>
 			</div>
-			<div class="panel reveal p-4 sm:p-6" style="animation-delay: 140ms;">
-				<div class="text-2xl sm:text-4xl font-bold text-text-primary leading-none">
-					{formatNumber(totals.total_input)}
-				</div>
-				<div class="text-xs text-text-tertiary uppercase tracking-widest mt-2">input tokens</div>
-				<div class="mt-2 text-[0.65rem] text-text-tertiary uppercase tracking-[0.18em]">
-					cached <span class="text-accent">{formatNumber(totals.total_cache_read)}</span>
-					<span class="text-text-tertiary">
-						({formatPercent(totals.total_cache_read, totalPrompt)})</span
-					>
+			<div class="panel reveal" style="animation-delay: 140ms;">
+				<div class="stat-value primary">{formatNumber(totals.total_input)}</div>
+				<div class="stat-label">input tokens</div>
+				<div class="stat-sublabel">
+					cached <span class="accent">{formatNumber(totals.total_cache_read)}</span>
+					<span class="text-tertiary">({formatPercent(totals.total_cache_read, totalPrompt)})</span>
 				</div>
 			</div>
-			<div class="panel reveal p-4 sm:p-6" style="animation-delay: 170ms;">
-				<div class="text-2xl sm:text-4xl font-bold text-text-secondary leading-none">
-					{formatNumber(totals.total_output)}
-				</div>
-				<div class="text-xs text-text-tertiary uppercase tracking-widest mt-2">output tokens</div>
+			<div class="panel reveal" style="animation-delay: 170ms;">
+				<div class="stat-value secondary">{formatNumber(totals.total_output)}</div>
+				<div class="stat-label">output tokens</div>
 			</div>
 		</svelte:boundary>
 	</section>
 
 	<!-- Charts Row 1 -->
-	<section class="grid grid-cols-1 gap-4 mb-6 lg:grid-cols-[2fr_1fr]">
-		<div class="panel reveal p-4 sm:p-6" style="animation-delay: 210ms;">
-			<h2 class="mb-4 text-xs font-medium text-text-secondary uppercase tracking-[0.15em]">
-				cost over time
-			</h2>
+	<section class="charts-grid">
+		<div class="panel reveal" style="animation-delay: 210ms;">
+			<h2 class="section-title">cost over time</h2>
 			<svelte:boundary>
 				{#snippet pending()}
 					{@render loadingState()}
@@ -217,10 +175,8 @@
 				/>
 			</svelte:boundary>
 		</div>
-		<div class="panel reveal p-4 sm:p-6" style="animation-delay: 240ms;">
-			<h2 class="mb-4 text-xs font-medium text-text-secondary uppercase tracking-[0.15em]">
-				cost by model
-			</h2>
+		<div class="panel reveal" style="animation-delay: 240ms;">
+			<h2 class="section-title">cost by model</h2>
 			<svelte:boundary>
 				{#snippet pending()}
 					{@render loadingState()}
@@ -238,11 +194,9 @@
 	</section>
 
 	<!-- Charts Row 2 -->
-	<section class="grid grid-cols-1 gap-4 mb-6 lg:grid-cols-[2fr_1fr]">
-		<div class="panel reveal p-4 sm:p-6" style="animation-delay: 270ms;">
-			<h2 class="mb-4 text-xs font-medium text-text-secondary uppercase tracking-[0.15em]">
-				token flow
-			</h2>
+	<section class="charts-grid">
+		<div class="panel reveal" style="animation-delay: 270ms;">
+			<h2 class="section-title">token flow</h2>
 			<svelte:boundary>
 				{#snippet pending()}
 					{@render loadingState()}
@@ -259,10 +213,8 @@
 				<TokensChart data={tokensTimeData} height={220} />
 			</svelte:boundary>
 		</div>
-		<div class="panel reveal p-4 sm:p-6" style="animation-delay: 300ms;">
-			<h2 class="mb-4 text-xs font-medium text-text-secondary uppercase tracking-[0.15em]">
-				cost by agent
-			</h2>
+		<div class="panel reveal" style="animation-delay: 300ms;">
+			<h2 class="section-title">cost by agent</h2>
 			<svelte:boundary>
 				{#snippet pending()}
 					{@render loadingState()}
@@ -281,19 +233,15 @@
 	</section>
 
 	<!-- Tokens explorer -->
-	<section class="grid grid-cols-1 gap-4 mb-6">
-		<div class="panel reveal p-4 w-full sm:p-6" style="animation-delay: 330ms;">
+	<section class="full-width-grid">
+		<div class="panel reveal" style="animation-delay: 330ms;">
 			<svelte:boundary>
 				{#snippet pending()}
-					<h2 class="mb-4 text-xs font-medium text-text-secondary uppercase tracking-[0.15em]">
-						tokens explorer
-					</h2>
+					<h2 class="section-title">tokens explorer</h2>
 					{@render loadingState()}
 				{/snippet}
 				{#snippet failed(error, retry)}
-					<h2 class="mb-4 text-xs font-medium text-text-secondary uppercase tracking-[0.15em]">
-						tokens explorer
-					</h2>
+					<h2 class="section-title">tokens explorer</h2>
 					{@render errorState(error, retry)}
 				{/snippet}
 				{@const tokensData = await getTokensData()}
@@ -303,10 +251,8 @@
 	</section>
 
 	<!-- Model Performance Table -->
-	<section class="panel reveal p-4 mb-6 sm:p-6" style="animation-delay: 360ms;">
-		<h2 class="mb-4 text-xs font-medium text-text-secondary uppercase tracking-[0.15em]">
-			model performance
-		</h2>
+	<section class="panel reveal" style="animation-delay: 360ms; margin-bottom: 1.5rem;">
+		<h2 class="section-title">model performance</h2>
 		<svelte:boundary>
 			{#snippet pending()}
 				{@render loadingState()}
@@ -316,7 +262,7 @@
 			{/snippet}
 			{@const costByModel = await getCostByModel()}
 			{@const modelPerformance = await getModelPerformance()}
-			<div class="overflow-x-auto">
+			<div class="table-container">
 				<table>
 					<thead>
 						<tr>
@@ -333,15 +279,12 @@
 							{@const avgDuration = modelPerformance.find((d) => d.model_id === model.model_id)}
 							<tr>
 								<td class="font-mono text-sm">
-									<span
-										class="inline-block bg-transparent border border-accent-dim text-text-secondary px-1.5 py-0.5 text-[0.65rem] mr-2 uppercase"
-										>{model.provider_id}</span
-									>
+									<span class="provider-badge">{model.provider_id}</span>
 									{getModelShortName(model.model_id)}
 								</td>
 								<td>{model.request_count.toLocaleString()}</td>
 								<td class="text-accent">{formatNumber(model.tokens_input)}</td>
-								<td class="text-text-primary">{formatNumber(model.tokens_output)}</td>
+								<td class="text-primary">{formatNumber(model.tokens_output)}</td>
 								<td>{avgDuration ? formatDuration(avgDuration.avg_duration_ms) : '-'}</td>
 								<td class="text-accent font-medium">{formatCost(model.cost_usd)}</td>
 							</tr>
@@ -353,10 +296,8 @@
 	</section>
 
 	<!-- Recent Activity -->
-	<section class="panel reveal p-4 mb-6 sm:p-6" style="animation-delay: 390ms;">
-		<h2 class="mb-4 text-xs font-medium text-text-secondary uppercase tracking-[0.15em]">
-			recent activity
-		</h2>
+	<section class="panel reveal" style="animation-delay: 390ms; margin-bottom: 1.5rem;">
+		<h2 class="section-title">recent activity</h2>
 		<svelte:boundary>
 			{#snippet pending()}
 				{@render loadingState()}
@@ -365,7 +306,7 @@
 				{@render errorState(error, retry)}
 			{/snippet}
 			{@const recentRequests = await getRecentRequests()}
-			<div class="overflow-x-auto max-h-[400px] overflow-y-auto">
+			<div class="table-container scrollable">
 				<table>
 					<thead>
 						<tr>
@@ -379,7 +320,7 @@
 					<tbody>
 						{#each recentRequests.slice(0, 15) as req}
 							<tr>
-								<td class="text-text-tertiary text-sm">
+								<td class="text-tertiary text-sm">
 									{new Date(req.created_at).toLocaleString(undefined, {
 										month: 'short',
 										day: 'numeric',
@@ -389,7 +330,7 @@
 								</td>
 								<td class="font-mono text-sm">{getModelShortName(req.model_id)}</td>
 								<td class="text-accent">{formatNumber(req.tokens_input)}</td>
-								<td class="text-text-primary">{formatNumber(req.tokens_output)}</td>
+								<td class="text-primary">{formatNumber(req.tokens_output)}</td>
 								<td class="text-accent font-medium">{formatCost(req.cost_usd)}</td>
 							</tr>
 						{/each}
@@ -400,13 +341,10 @@
 	</section>
 
 	<!-- Footer -->
-	<footer
-		class="reveal flex flex-col gap-3 py-6 border-t border-grid-line-bright text-text-tertiary text-xs sm:flex-row sm:justify-between sm:items-center"
-		style="animation-delay: 420ms;"
-	>
+	<footer class="footer reveal" style="animation-delay: 420ms;">
 		<svelte:boundary>
 			{#snippet pending()}
-				<div class="flex flex-wrap gap-x-2 gap-y-1">
+				<div class="footer-stats">
 					<span>Cache Read: --</span>
 					<span class="text-accent-dim">|</span>
 					<span>Cache Write: --</span>
@@ -415,7 +353,7 @@
 				</div>
 			{/snippet}
 			{#snippet failed()}
-				<div class="flex flex-wrap gap-x-2 gap-y-1">
+				<div class="footer-stats">
 					<span>Cache Read: --</span>
 					<span class="text-accent-dim">|</span>
 					<span>Cache Write: --</span>
@@ -424,7 +362,7 @@
 				</div>
 			{/snippet}
 			{@const totals = await getTotals()}
-			<div class="flex flex-wrap gap-x-2 gap-y-1">
+			<div class="footer-stats">
 				<span>Cache Read: {formatNumber(totals.total_cache_read)}</span>
 				<span class="text-accent-dim">|</span>
 				<span>Cache Write: {formatNumber(totals.total_cache_write)}</span>
@@ -432,6 +370,6 @@
 				<span>Reasoning: {formatNumber(totals.total_reasoning)}</span>
 			</div>
 		</svelte:boundary>
-		<div class="tracking-[0.18em] uppercase">OpenCode Stats v1.0</div>
+		<div class="footer-version">OpenCode Stats v1.0</div>
 	</footer>
 </div>

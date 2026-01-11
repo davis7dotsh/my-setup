@@ -516,18 +516,13 @@
 	});
 </script>
 
-<div class="flex items-baseline justify-between gap-4 mb-3">
-	<h2 class="m-0 text-xs font-medium text-text-secondary uppercase tracking-[0.15em]">
-		TOKENS OVER TIME
-	</h2>
-	<div class="flex gap-1.5">
+<div class="chart-header">
+	<h2 class="section-title" style="margin: 0;">TOKENS OVER TIME</h2>
+	<div class="range-buttons">
 		{#each ['day', 'week', 'month', 'year'] as r}
 			<button
 				type="button"
-				class="px-2 py-1 text-[0.65rem] tracking-[0.1em] uppercase border border-grid-line-bright bg-transparent text-text-tertiary cursor-pointer hover:text-text-secondary {range ===
-				(r as Range)
-					? '!text-text-primary !border-[rgba(59,130,246,0.6)] !bg-[rgba(59,130,246,0.12)]'
-					: ''}"
+				class="range-btn {range === (r as Range) ? 'active' : ''}"
 				onclick={() => setRange(r as Range)}
 			>
 				{labelForRange(r as Range)}

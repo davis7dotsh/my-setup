@@ -11,6 +11,6 @@
 	<meta name="description" content="Token usage statistics for OpenCode" />
 </svelte:head>
 
-<div class="w-full">
+<div>
 	{@render children()}
 </div>
