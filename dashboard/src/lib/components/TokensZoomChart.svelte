@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import type { Attachment } from 'svelte/attachments';
 	import * as d3 from 'd3';
 
 	type Range = 'day' | 'week' | 'month' | 'year';
@@ -16,10 +16,9 @@
 
 	let { hourly, daily, height = 220, width = 900, initialRange = 'day' }: Props = $props();
 
-	let svgElement: SVGSVGElement;
-	let containerEl: HTMLDivElement;
+	let svgElement: SVGSVGElement | undefined = $state();
 	let actualWidth = $state(0);
-	let range = $state<Range>('day');
+	let range = $state<Range>(initialRange);
 
 	type TooltipState = {
 		x: number;
@@ -59,8 +58,8 @@
 			.sort((a, b) => a.date.getTime() - b.date.getTime());
 	}
 
-	function renderChart() {
-		if (!svgElement || !containerEl) return;
+	function renderChart(containerEl: HTMLDivElement) {
+		if (!svgElement) return;
 
 		const svg = d3.select(svgElement);
 		svg.selectAll('*').remove();
@@ -503,25 +502,25 @@
 		range = r;
 	}
 
-	onMount(() => {
-		range = initialRange;
-		if (containerEl) {
-			actualWidth = containerEl.clientWidth || width;
-			const resizeObserver = new ResizeObserver((entries) => {
-				for (const entry of entries) {
-					actualWidth = entry.contentRect.width;
-				}
-			});
-			resizeObserver.observe(containerEl);
-			return () => resizeObserver.disconnect();
-		}
-	});
+	const chartAttachment: Attachment = (container) => {
+		const el = container as HTMLDivElement;
+		actualWidth = el.clientWidth || width;
 
-	$effect(() => {
-		if (hourly && daily && actualWidth && range) {
-			renderChart();
-		}
-	});
+		const resizeObserver = new ResizeObserver((entries) => {
+			for (const entry of entries) {
+				actualWidth = entry.contentRect.width;
+			}
+		});
+		resizeObserver.observe(el);
+
+		$effect(() => {
+			if (hourly && daily && actualWidth && range) {
+				renderChart(el);
+			}
+		});
+
+		return () => resizeObserver.disconnect();
+	};
 </script>
 
 <div class="chart-header">
@@ -539,7 +538,7 @@
 	</div>
 </div>
 
-<div bind:this={containerEl} class="chart-container" style="width: 100%;">
+<div {@attach chartAttachment} class="chart-container" style="width: 100%;">
 	<svg bind:this={svgElement}></svg>
 	{#if tooltip}
 		<div class="tooltip" style={`left: ${tooltip.x}px; top: ${tooltip.y}px;`}>

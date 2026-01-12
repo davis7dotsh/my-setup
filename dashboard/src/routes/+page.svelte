@@ -389,6 +389,7 @@
 				<div class="text-tertiary text-sm py-8 text-center">No data available</div>
 			{/if}
 		</div>
+
 		<div class="panel reveal" style="animation-delay: 240ms;">
 			<h2 class="section-title">cost by model</h2>
 			{#if costByModelLoading}
@@ -453,19 +454,29 @@
 				{@render errorState(fileTypeSummaryError, fetchFileTypeSummary)}
 			{:else if fileTypeSummary && fileTypeSummary.length > 0}
 				{@const totalLinesAdded = fileTypeSummary.reduce((sum, d) => sum + d.total_lines_added, 0)}
-				{@const totalLinesRemoved = fileTypeSummary.reduce((sum, d) => sum + d.total_lines_removed, 0)}
-				{@const totalEdits = fileTypeSummary.reduce((sum, d) => sum + d.edit_count + d.write_count, 0)}
+				{@const totalLinesRemoved = fileTypeSummary.reduce(
+					(sum, d) => sum + d.total_lines_removed,
+					0
+				)}
+				{@const totalEdits = fileTypeSummary.reduce(
+					(sum, d) => sum + d.edit_count + d.write_count,
+					0
+				)}
 				<div class="language-stats">
 					<div class="lang-stat">
 						<div class="lang-stat-value text-accent">{formatNumber(totalLinesAdded)}</div>
 						<div class="lang-stat-label">total lines added</div>
 					</div>
 					<div class="lang-stat">
-						<div class="lang-stat-value" style="color: #ef4444;">{formatNumber(totalLinesRemoved)}</div>
+						<div class="lang-stat-value" style="color: #ef4444;">
+							{formatNumber(totalLinesRemoved)}
+						</div>
 						<div class="lang-stat-label">total lines removed</div>
 					</div>
 					<div class="lang-stat">
-						<div class="lang-stat-value" style="color: #22c55e;">{formatNumber(totalLinesAdded - totalLinesRemoved)}</div>
+						<div class="lang-stat-value" style="color: #22c55e;">
+							{formatNumber(totalLinesAdded - totalLinesRemoved)}
+						</div>
 						<div class="lang-stat-label">net lines</div>
 					</div>
 					<div class="lang-stat">

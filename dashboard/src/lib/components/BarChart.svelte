@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import type { Attachment } from 'svelte/attachments';
 	import * as d3 from 'd3';
 
 	interface Props {
@@ -18,8 +18,7 @@
 		horizontal = false
 	}: Props = $props();
 
-	let svgElement: SVGSVGElement;
-	let containerEl: HTMLDivElement;
+	let svgElement: SVGSVGElement | undefined = $state();
 	let actualWidth = $state(0);
 
 	type TooltipState = {
@@ -48,7 +47,7 @@
 		return `$${n.toFixed(4)}`;
 	}
 
-	function renderChart() {
+	function renderChart(containerEl: HTMLDivElement) {
 		if (!svgElement || !data || data.length === 0) return;
 
 		const svg = d3.select(svgElement);
@@ -118,7 +117,6 @@
 					d3.select(this).attr('fill', hoverFill).attr('stroke', 'rgba(255, 255, 255, 0.25)');
 				})
 				.on('pointermove', function (event, d) {
-					if (!containerEl) return;
 					const [px, py] = d3.pointer(event, containerEl);
 					const share = total > 0 ? `${((d.value / total) * 100).toFixed(1)}%` : '—';
 					tooltip = {
@@ -211,7 +209,6 @@
 					d3.select(this).attr('fill', hoverFill).attr('stroke', 'rgba(255, 255, 255, 0.25)');
 				})
 				.on('pointermove', function (event, d) {
-					if (!containerEl) return;
 					const [px, py] = d3.pointer(event, containerEl);
 					const share = total > 0 ? `${((d.value / total) * 100).toFixed(1)}%` : '—';
 					tooltip = {
@@ -259,27 +256,28 @@
 		}
 	}
 
-	onMount(() => {
-		if (containerEl) {
-			actualWidth = containerEl.clientWidth || width;
-			const resizeObserver = new ResizeObserver((entries) => {
-				for (const entry of entries) {
-					actualWidth = entry.contentRect.width;
-				}
-			});
-			resizeObserver.observe(containerEl);
-			return () => resizeObserver.disconnect();
-		}
-	});
+	const chartAttachment: Attachment = (container) => {
+		const el = container as HTMLDivElement;
+		actualWidth = el.clientWidth || width;
 
-	$effect(() => {
-		if (data && actualWidth) {
-			renderChart();
-		}
-	});
+		const resizeObserver = new ResizeObserver((entries) => {
+			for (const entry of entries) {
+				actualWidth = entry.contentRect.width;
+			}
+		});
+		resizeObserver.observe(el);
+
+		$effect(() => {
+			if (data && actualWidth) {
+				renderChart(el);
+			}
+		});
+
+		return () => resizeObserver.disconnect();
+	};
 </script>
 
-<div bind:this={containerEl} class="chart-container" style="width: 100%;">
+<div {@attach chartAttachment} class="chart-container" style="width: 100%;">
 	<svg bind:this={svgElement}></svg>
 	{#if tooltip}
 		<div class="tooltip" style={`left: ${tooltip.x}px; top: ${tooltip.y}px;`}>
