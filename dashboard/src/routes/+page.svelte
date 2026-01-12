@@ -152,7 +152,9 @@
 		tokensDataLoading = true;
 		tokensDataError = null;
 		try {
-			tokensData = await getTokensData();
+			// Pass the user's timezone offset to get hourly data in local time
+			const tzOffsetMinutes = new Date().getTimezoneOffset();
+			tokensData = await getTokensData(tzOffsetMinutes);
 		} catch (e) {
 			tokensDataError = e instanceof Error ? e : new Error('Failed to load');
 		} finally {

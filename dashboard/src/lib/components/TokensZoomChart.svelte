@@ -46,13 +46,16 @@
 	}
 
 	function normalizeDaily() {
-		const parse = d3.timeParse('%Y-%m-%d');
+		// Parse dates and convert to local timezone for display
 		return daily
-			.map((d) => ({
-				date: parse(d.date) || new Date(d.date),
-				input: d.tokens_input,
-				output: d.tokens_output
-			}))
+			.map((d) => {
+				const [year, month, day] = d.date.split('-').map(Number);
+				return {
+					date: new Date(year, month - 1, day), // Local timezone
+					input: d.tokens_input,
+					output: d.tokens_output
+				};
+			})
 			.sort((a, b) => a.date.getTime() - b.date.getTime());
 	}
 
@@ -103,17 +106,18 @@
 			start.setHours(0, 0, 0, 0);
 			start.setDate(start.getDate() - 6);
 
-			const map = new Map(dailyParsed.map((d) => [d3.timeFormat('%Y-%m-%d')(d.date), d]));
+			const formatKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+			const map = new Map(dailyParsed.map((d) => [formatKey(d.date), d]));
 			points = Array.from({ length: 7 }, (_, i) => {
 				const date = new Date(start);
 				date.setDate(start.getDate() + i);
-				const key = d3.timeFormat('%Y-%m-%d')(date);
+				const key = formatKey(date);
 				const entry = map.get(key);
 				return {
 					x: date,
 					input: entry?.input ?? 0,
 					output: entry?.output ?? 0,
-					label: d3.timeFormat('%a %b %-d')(date)
+					label: date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
 				};
 			});
 		} else if (range === 'month') {
@@ -121,17 +125,18 @@
 			start.setHours(0, 0, 0, 0);
 			start.setDate(start.getDate() - 29);
 
-			const map = new Map(dailyParsed.map((d) => [d3.timeFormat('%Y-%m-%d')(d.date), d]));
+			const formatKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+			const map = new Map(dailyParsed.map((d) => [formatKey(d.date), d]));
 			points = Array.from({ length: 30 }, (_, i) => {
 				const date = new Date(start);
 				date.setDate(start.getDate() + i);
-				const key = d3.timeFormat('%Y-%m-%d')(date);
+				const key = formatKey(date);
 				const entry = map.get(key);
 				return {
 					x: date,
 					input: entry?.input ?? 0,
 					output: entry?.output ?? 0,
-					label: d3.timeFormat('%b %-d')(date)
+					label: date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
 				};
 			});
 		} else {
@@ -141,7 +146,7 @@
 			monthStart.setDate(1);
 			monthStart.setMonth(monthStart.getMonth() - 11);
 
-			const monthKey = d3.timeFormat('%Y-%m');
+			const monthKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
 			const monthAgg = new Map<string, { date: Date; input: number; output: number }>();
 			for (const d of dailyParsed) {
 				const key = monthKey(d.date);
@@ -167,7 +172,7 @@
 					x: date,
 					input: entry?.input ?? 0,
 					output: entry?.output ?? 0,
-					label: d3.timeFormat('%b %Y')(date)
+					label: date.toLocaleDateString(undefined, { month: 'short', year: 'numeric' })
 				};
 			});
 		}
@@ -325,12 +330,15 @@
 				.attr('fill', 'rgba(255, 255, 255, 0.50)')
 				.attr('font-size', '10px');
 		} else {
-			const fmt =
-				range === 'week'
-					? d3.timeFormat('%a')
-					: range === 'month'
-						? d3.timeFormat('%b %-d')
-						: d3.timeFormat('%b');
+			const fmt = (d: Date) => {
+				if (range === 'week') {
+					return d.toLocaleDateString(undefined, { weekday: 'short' });
+				} else if (range === 'month') {
+					return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+				} else {
+					return d.toLocaleDateString(undefined, { month: 'short' });
+				}
+			};
 
 			xAxis
 				.call(

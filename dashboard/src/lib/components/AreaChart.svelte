@@ -88,15 +88,21 @@
 
 		// No glow filter (clean theme)
 
-		const parseDate = d3.timeParse('%Y-%m-%d');
+		// Parse dates and convert to local timezone for display
 		const parsedData = data
-			.map((d) => ({
-				date: parseDate(d.date) || new Date(d.date),
-				value: d.value
-			}))
+			.map((d) => {
+				// Parse as UTC then create a local date with the same calendar values
+				const [year, month, day] = d.date.split('-').map(Number);
+				return {
+					date: new Date(year, month - 1, day), // Local timezone
+					value: d.value
+				};
+			})
 			.sort((a, b) => a.date.getTime() - b.date.getTime());
 
-		const formatDate = d3.timeFormat('%b %d, %Y');
+		// Format in local timezone
+		const formatDate = (d: Date) =>
+			d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 
 		const y = d3
 			.scaleLinear()
@@ -260,7 +266,7 @@
 				d3
 					.axisBottom(x)
 					.ticks(5)
-					.tickFormat((d) => d3.timeFormat('%b %d')(d as Date))
+					.tickFormat((d) => (d as Date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }))
 			)
 			.selectAll('text')
 			.attr('fill', 'rgba(255, 255, 255, 0.50)')

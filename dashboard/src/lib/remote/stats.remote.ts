@@ -2,6 +2,7 @@ import { query } from '$app/server';
 import { db } from '$lib/server/db';
 import { requests, dailySummary, toolCalls, fileEdits } from '$lib/db/schema';
 import { desc, sql, sum, count, avg, eq, isNotNull } from 'drizzle-orm';
+import * as v from 'valibot';
 
 // Totals query - aggregate stats
 export const getTotals = query(async () => {
@@ -78,17 +79,25 @@ export const getCostOverTime = query(async () => {
 });
 
 // Tokens by hour today and tokens by day (for zoom chart)
-export const getTokensData = query(async () => {
+// Accepts timezone offset in minutes (e.g., -480 for PST = UTC-8)
+export const getTokensData = query(v.number(), async (tzOffsetMinutes: number) => {
+	// Convert offset to interval string (e.g., -480 -> '-8 hours')
+	const offsetHours = -tzOffsetMinutes / 60;
+	const intervalStr = `${offsetHours} hours`;
+
+	// Get hourly data for today in user's local timezone
 	const tokensByHourToday = await db
 		.select({
-			hour: sql<number>`EXTRACT(HOUR FROM ${requests.createdAt})::int`,
+			hour: sql<number>`EXTRACT(HOUR FROM ${requests.createdAt} + INTERVAL '${sql.raw(intervalStr)}')::int`,
 			tokens_input: sql<number>`COALESCE(SUM(${requests.tokensInput}), 0)`,
 			tokens_output: sql<number>`COALESCE(SUM(${requests.tokensOutput}), 0)`
 		})
 		.from(requests)
-		.where(sql`DATE(${requests.createdAt}) = CURRENT_DATE`)
-		.groupBy(sql`EXTRACT(HOUR FROM ${requests.createdAt})`)
-		.orderBy(sql`EXTRACT(HOUR FROM ${requests.createdAt})`);
+		.where(
+			sql`DATE(${requests.createdAt} + INTERVAL '${sql.raw(intervalStr)}') = DATE(NOW() + INTERVAL '${sql.raw(intervalStr)}')`
+		)
+		.groupBy(sql`EXTRACT(HOUR FROM ${requests.createdAt} + INTERVAL '${sql.raw(intervalStr)}')`)
+		.orderBy(sql`EXTRACT(HOUR FROM ${requests.createdAt} + INTERVAL '${sql.raw(intervalStr)}')`);
 
 	const tokensByDay = await db
 		.select({
