@@ -6,9 +6,10 @@
 		data: { label: string; value: number }[];
 		width?: number;
 		height?: number;
+		showLegend?: boolean;
 	}
 
-	let { data, width = 300, height = 300 }: Props = $props();
+	let { data, width = 300, height = 300, showLegend = false }: Props = $props();
 
 	let svgElement: SVGSVGElement;
 	let containerEl: HTMLDivElement;
@@ -57,7 +58,9 @@
 
 		// No glow filter (clean theme)
 
-		const g = svg.append('g').attr('transform', `translate(${actualWidth / 2},${height / 2})`);
+		// Center the donut - if legend is shown, shift left to make room
+		const centerX = showLegend ? actualWidth / 2 - 60 : actualWidth / 2;
+		const g = svg.append('g').attr('transform', `translate(${centerX},${height / 2})`);
 
 		const pie = d3
 			.pie<{ label: string; value: number }>()
@@ -174,74 +177,76 @@
 
 		resetCenter();
 
-		// Legend
-		const legend = svg.append('g').attr('transform', `translate(${actualWidth - 120}, 20)`);
+		// Legend (optional)
+		if (showLegend) {
+			const legend = svg.append('g').attr('transform', `translate(${actualWidth - 120}, 20)`);
 
-		const legendItems = legend
-			.selectAll<SVGGElement, (typeof data)[number]>('.legend-item')
-			.data(data)
-			.enter()
-			.append('g')
-			.attr('class', 'legend-item')
-			.attr('data-index', (_, i) => String(i))
-			.attr('transform', (_, i) => `translate(0, ${i * 20})`)
-			.style('cursor', 'pointer')
-			.on('pointerenter', function (event, d) {
-				const index = Number((this as SVGGElement).getAttribute('data-index'));
-				const arcDatum = pieData[index];
-				const sliceColor = colors[index % colors.length];
+			const legendItems = legend
+				.selectAll<SVGGElement, (typeof data)[number]>('.legend-item')
+				.data(data)
+				.enter()
+				.append('g')
+				.attr('class', 'legend-item')
+				.attr('data-index', (_, i) => String(i))
+				.attr('transform', (_, i) => `translate(0, ${i * 20})`)
+				.style('cursor', 'pointer')
+				.on('pointerenter', function (event, d) {
+					const index = Number((this as SVGGElement).getAttribute('data-index'));
+					const arcDatum = pieData[index];
+					const sliceColor = colors[index % colors.length];
 
-				paths
-					.filter((_, i) => i === index)
-					.interrupt()
-					.transition()
-					.duration(180)
-					.attr('d', arcHover(arcDatum))
-					.attr('opacity', 1);
+					paths
+						.filter((_, i) => i === index)
+						.interrupt()
+						.transition()
+						.duration(180)
+						.attr('d', arcHover(arcDatum))
+						.attr('opacity', 1);
 
-				const share = total > 0 ? `${((d.value / total) * 100).toFixed(1)}%` : '—';
-				setCenterValue(formatUsd(d.value), d.label, sliceColor);
-				updateTooltip(event as PointerEvent, d.label, [
-					{ label: 'Cost', value: formatUsd(d.value) },
-					{ label: 'Share', value: share }
-				]);
-			})
-			.on('pointermove', function (event, d) {
-				const share = total > 0 ? `${((d.value / total) * 100).toFixed(1)}%` : '—';
-				updateTooltip(event as PointerEvent, d.label, [
-					{ label: 'Cost', value: formatUsd(d.value) },
-					{ label: 'Share', value: share }
-				]);
-			})
-			.on('pointerleave', function () {
-				const index = Number((this as SVGGElement).getAttribute('data-index'));
-				const arcDatum = pieData[index];
-				paths
-					.filter((_, i) => i === index)
-					.interrupt()
-					.transition()
-					.duration(180)
-					.attr('d', arc(arcDatum))
-					.attr('opacity', 0.9);
+					const share = total > 0 ? `${((d.value / total) * 100).toFixed(1)}%` : '—';
+					setCenterValue(formatUsd(d.value), d.label, sliceColor);
+					updateTooltip(event as PointerEvent, d.label, [
+						{ label: 'Cost', value: formatUsd(d.value) },
+						{ label: 'Share', value: share }
+					]);
+				})
+				.on('pointermove', function (event, d) {
+					const share = total > 0 ? `${((d.value / total) * 100).toFixed(1)}%` : '—';
+					updateTooltip(event as PointerEvent, d.label, [
+						{ label: 'Cost', value: formatUsd(d.value) },
+						{ label: 'Share', value: share }
+					]);
+				})
+				.on('pointerleave', function () {
+					const index = Number((this as SVGGElement).getAttribute('data-index'));
+					const arcDatum = pieData[index];
+					paths
+						.filter((_, i) => i === index)
+						.interrupt()
+						.transition()
+						.duration(180)
+						.attr('d', arc(arcDatum))
+						.attr('opacity', 0.9);
 
-				tooltip = null;
-				resetCenter();
-			});
+					tooltip = null;
+					resetCenter();
+				});
 
-		legendItems
-			.append('rect')
-			.attr('width', 12)
-			.attr('height', 12)
-			.attr('rx', 0)
-			.attr('fill', (_, i) => colors[i % colors.length]);
+			legendItems
+				.append('rect')
+				.attr('width', 12)
+				.attr('height', 12)
+				.attr('rx', 0)
+				.attr('fill', (_, i) => colors[i % colors.length]);
 
-		legendItems
-			.append('text')
-			.attr('x', 18)
-			.attr('y', 10)
-			.attr('fill', 'rgba(255, 255, 255, 0.50)')
-			.attr('font-size', '9px')
-			.text((d) => (d.label.length > 12 ? d.label.slice(0, 12) + '...' : d.label));
+			legendItems
+				.append('text')
+				.attr('x', 18)
+				.attr('y', 10)
+				.attr('fill', 'rgba(255, 255, 255, 0.50)')
+				.attr('font-size', '9px')
+				.text((d) => (d.label.length > 12 ? d.label.slice(0, 12) + '...' : d.label));
+		}
 	}
 
 	onMount(() => {
