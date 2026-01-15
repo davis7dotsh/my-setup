@@ -1,3 +1,5 @@
+import modelsDev from '$lib/assets/models.dev.json';
+
 type ModelCost = {
 	input?: number;
 	output?: number;
@@ -10,25 +12,25 @@ type ModelsDevProvider = {
 	models?: Record<string, { cost?: ModelCost }>;
 };
 
-const modelsDev = (await Bun.file(new URL('./models.dev.cache.json', import.meta.url)).json()) as Record<
-	string,
-	ModelsDevProvider
->;
+const modelsDevData = modelsDev as Record<string, ModelsDevProvider>;
 
-const pricingByProviderModel = Object.entries(modelsDev).reduce((map, [providerId, provider]) => {
-	const models = provider.models ?? {};
-	for (const [modelId, model] of Object.entries(models)) {
-		if (model.cost) {
-			map.set(`${providerId}:${modelId}`, model.cost);
+const pricingByProviderModel = Object.entries(modelsDevData).reduce(
+	(map, [providerId, provider]) => {
+		const models = provider.models ?? {};
+		for (const [modelId, model] of Object.entries(models)) {
+			if (model.cost) {
+				map.set(`${providerId}:${modelId}`, model.cost);
+			}
 		}
-	}
-	return map;
-}, new Map<string, ModelCost>());
+		return map;
+	},
+	new Map<string, ModelCost>()
+);
 
 const perMillion = 1_000_000;
 
 const getModelCost = (providerId?: string | null, modelId?: string | null) =>
-	providerId && modelId ? pricingByProviderModel.get(`${providerId}:${modelId}`) ?? null : null;
+	providerId && modelId ? (pricingByProviderModel.get(`${providerId}:${modelId}`) ?? null) : null;
 
 const computeCostUsd = ({
 	providerId,
