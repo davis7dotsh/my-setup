@@ -13,6 +13,7 @@ import {
 } from '$lib/db/schema';
 import { and, desc, eq, isNull, sql } from 'drizzle-orm';
 import { publishLiveEvent } from '$lib/server/live';
+import { resolveCostUsd } from '$lib/server/model-pricing';
 import { env } from '$env/dynamic/private';
 
 type RequestEvent = {
@@ -387,6 +388,16 @@ export const POST: RequestHandler = async ({ request }) => {
 				const now = new Date();
 				const timestamp = event.createdAt ? new Date(event.createdAt) : now;
 				const dateStr = timestamp.toISOString().split('T')[0];
+				const resolvedCost = resolveCostUsd({
+					costUsd: event.cost,
+					providerId: event.providerId,
+					modelId: event.modelId,
+					tokensInput: event.tokens.input,
+					tokensOutput: event.tokens.output,
+					tokensReasoning: event.tokens.reasoning,
+					tokensCacheRead: event.tokens.cache.read,
+					tokensCacheWrite: event.tokens.cache.write
+				});
 
 				// Fetch existing record first (if any)
 				const existing = await db
@@ -411,7 +422,7 @@ export const POST: RequestHandler = async ({ request }) => {
 						tokensReasoning: event.tokens.reasoning,
 						tokensCacheRead: event.tokens.cache.read,
 						tokensCacheWrite: event.tokens.cache.write,
-						costUsd: event.cost,
+						costUsd: resolvedCost,
 						durationMs: event.durationMs,
 						finishReason: event.finishReason,
 						workingDir: event.workingDir,
@@ -426,7 +437,7 @@ export const POST: RequestHandler = async ({ request }) => {
 							tokensReasoning: event.tokens.reasoning,
 							tokensCacheRead: event.tokens.cache.read,
 							tokensCacheWrite: event.tokens.cache.write,
-							costUsd: event.cost,
+							costUsd: resolvedCost,
 							durationMs: event.durationMs,
 							finishReason: event.finishReason,
 							completedAt: event.completedAt ? new Date(event.completedAt) : null
@@ -443,7 +454,7 @@ export const POST: RequestHandler = async ({ request }) => {
 							firstRequestAt: timestamp,
 							lastRequestAt: timestamp,
 							totalRequests: 1,
-							totalCostUsd: event.cost,
+							totalCostUsd: resolvedCost,
 							totalTokensInput: event.tokens.input,
 							totalTokensOutput: event.tokens.output
 						})
@@ -452,7 +463,7 @@ export const POST: RequestHandler = async ({ request }) => {
 							set: {
 								lastRequestAt: timestamp,
 								totalRequests: sql`${sessions.totalRequests} + 1`,
-								totalCostUsd: sql`${sessions.totalCostUsd} + ${event.cost}`,
+								totalCostUsd: sql`${sessions.totalCostUsd} + ${resolvedCost}`,
 								totalTokensInput: sql`${sessions.totalTokensInput} + ${event.tokens.input}`,
 								totalTokensOutput: sql`${sessions.totalTokensOutput} + ${event.tokens.output}`
 							}
@@ -470,7 +481,7 @@ export const POST: RequestHandler = async ({ request }) => {
 							tokensReasoning: event.tokens.reasoning,
 							tokensCacheRead: event.tokens.cache.read,
 							tokensCacheWrite: event.tokens.cache.write,
-							costUsd: event.cost
+							costUsd: resolvedCost
 						})
 						.onConflictDoUpdate({
 							target: [dailySummary.date, dailySummary.providerId, dailySummary.modelId],
@@ -481,7 +492,7 @@ export const POST: RequestHandler = async ({ request }) => {
 								tokensReasoning: sql`${dailySummary.tokensReasoning} + ${event.tokens.reasoning}`,
 								tokensCacheRead: sql`${dailySummary.tokensCacheRead} + ${event.tokens.cache.read}`,
 								tokensCacheWrite: sql`${dailySummary.tokensCacheWrite} + ${event.tokens.cache.write}`,
-								costUsd: sql`${dailySummary.costUsd} + ${event.cost}`
+								costUsd: sql`${dailySummary.costUsd} + ${resolvedCost}`
 							}
 						});
 				} else {
@@ -491,7 +502,7 @@ export const POST: RequestHandler = async ({ request }) => {
 					const deltaReasoning = event.tokens.reasoning - (existingRecord.tokensReasoning || 0);
 					const deltaCacheRead = event.tokens.cache.read - (existingRecord.tokensCacheRead || 0);
 					const deltaCacheWrite = event.tokens.cache.write - (existingRecord.tokensCacheWrite || 0);
-					const deltaCost = event.cost - (existingRecord.costUsd || 0);
+					const deltaCost = resolvedCost - (existingRecord.costUsd || 0);
 
 					if (deltaCost !== 0 || deltaInput !== 0 || deltaOutput !== 0) {
 						await db
@@ -545,7 +556,7 @@ export const POST: RequestHandler = async ({ request }) => {
 							tokensReasoning: event.tokens.reasoning,
 							tokensCacheRead: event.tokens.cache.read,
 							tokensCacheWrite: event.tokens.cache.write,
-							costUsd: event.cost,
+							costUsd: resolvedCost,
 							durationMs: event.durationMs,
 							finishReason: event.finishReason,
 							completedAt: event.completedAt ? new Date(event.completedAt) : null
@@ -561,7 +572,7 @@ export const POST: RequestHandler = async ({ request }) => {
 					modelId: event.modelId,
 					agent: event.agent,
 					tokens: event.tokens,
-					cost: event.cost,
+					cost: resolvedCost,
 					createdAt: timestamp.toISOString(),
 					completedAt: event.completedAt
 				});

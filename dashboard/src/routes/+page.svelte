@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { untrack } from 'svelte';
 	import AreaChart from '$lib/components/AreaChart.svelte';
 	import BarChart from '$lib/components/BarChart.svelte';
 	import DonutChart from '$lib/components/DonutChart.svelte';
@@ -221,9 +221,8 @@
 		fetchFileTypeSummary();
 	}
 
-	// Initial data fetch
-	onMount(() => {
-		refreshAll();
+	$effect(() => {
+		untrack(() => refreshAll());
 
 		const interval = setInterval(() => {
 			currentTime = new Date().toLocaleTimeString();
@@ -264,11 +263,19 @@
 	let costTimeData = $derived(
 		costOverTime?.map((d) => ({ date: d.date, value: d.cost_usd })) ?? []
 	);
-	let modelCostData = $derived(
-		costByModel
-			?.slice(0, 8)
-			.map((d) => ({ label: getModelShortName(d.model_id), value: d.cost_usd })) ?? []
-	);
+	const modelCostLimit = 8;
+	let modelCostData = $derived.by(() => {
+		const items = costByModel ?? [];
+		const topItems = items.slice(0, modelCostLimit);
+		const topData = topItems.map((d) => ({
+			label: getModelShortName(d.model_id),
+			value: d.cost_usd
+		}));
+		const totalCost = items.reduce((sum, d) => sum + d.cost_usd, 0);
+		const topCost = topItems.reduce((sum, d) => sum + d.cost_usd, 0);
+		const otherCost = totalCost - topCost;
+		return otherCost > 0 ? [...topData, { label: 'other', value: otherCost }] : topData;
+	});
 	let tokensTimeData = $derived(
 		costOverTime?.map((d) => ({
 			date: d.date,
@@ -373,7 +380,10 @@
 	<!-- Charts Row 1 -->
 	<section class="charts-grid">
 		<div class="panel reveal" style="animation-delay: 210ms;">
-			<h2 class="section-title">cost over time</h2>
+			<div class="section-header">
+				<h2 class="section-title">cost over time</h2>
+				<div class="section-subtitle">last 30 days</div>
+			</div>
 			{#if costOverTimeLoading}
 				{@render loadingState()}
 			{:else if costOverTimeError}
@@ -391,7 +401,10 @@
 		</div>
 
 		<div class="panel reveal" style="animation-delay: 240ms;">
-			<h2 class="section-title">cost by model</h2>
+			<div class="section-header">
+				<h2 class="section-title">cost by model</h2>
+				<div class="section-subtitle">top {modelCostLimit} + other • all time</div>
+			</div>
 			{#if costByModelLoading}
 				{@render loadingState()}
 			{:else if costByModelError}
@@ -496,7 +509,7 @@
 							</tr>
 						</thead>
 						<tbody>
-							{#each fileTypeSummary.slice(0, 8) as item}
+							{#each fileTypeSummary.slice(0, 8) as item (item.file_extension)}
 								<tr>
 									<td class="font-mono">.{item.file_extension}</td>
 									<td style="color: #22c55e;">+{formatNumber(item.total_lines_added)}</td>
@@ -554,7 +567,7 @@
 						</tr>
 					</thead>
 					<tbody>
-						{#each costByModel as model}
+						{#each costByModel as model (model.model_id)}
 							{@const avgDuration = modelPerformance?.find((d) => d.model_id === model.model_id)}
 							<tr>
 								<td class="font-mono text-sm">
@@ -598,7 +611,7 @@
 						</tr>
 					</thead>
 					<tbody>
-						{#each recentRequests.slice(0, 15) as req}
+						{#each recentRequests.slice(0, 15) as req (req.id)}
 							<tr>
 								<td class="text-tertiary text-sm">
 									{new Date(req.created_at).toLocaleString(undefined, {

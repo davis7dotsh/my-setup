@@ -264,7 +264,9 @@
 				d3
 					.axisBottom(x)
 					.ticks(5)
-					.tickFormat((d) => (d as Date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }))
+					.tickFormat((d) =>
+						(d as Date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+					)
 			)
 			.selectAll('text')
 			.attr('fill', 'rgba(255, 255, 255, 0.50)')

@@ -105,7 +105,8 @@
 			start.setHours(0, 0, 0, 0);
 			start.setDate(start.getDate() - 6);
 
-			const formatKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+			const formatKey = (d: Date) =>
+				`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 			const map = new Map(dailyParsed.map((d) => [formatKey(d.date), d]));
 			points = Array.from({ length: 7 }, (_, i) => {
 				const date = new Date(start);
@@ -116,7 +117,11 @@
 					x: date,
 					input: entry?.input ?? 0,
 					output: entry?.output ?? 0,
-					label: date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
+					label: date.toLocaleDateString(undefined, {
+						weekday: 'short',
+						month: 'short',
+						day: 'numeric'
+					})
 				};
 			});
 		} else if (range === 'month') {
@@ -124,7 +129,8 @@
 			start.setHours(0, 0, 0, 0);
 			start.setDate(start.getDate() - 29);
 
-			const formatKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+			const formatKey = (d: Date) =>
+				`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 			const map = new Map(dailyParsed.map((d) => [formatKey(d.date), d]));
 			points = Array.from({ length: 30 }, (_, i) => {
 				const date = new Date(start);
@@ -145,7 +151,8 @@
 			monthStart.setDate(1);
 			monthStart.setMonth(monthStart.getMonth() - 11);
 
-			const monthKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+			const monthKey = (d: Date) =>
+				`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
 			const monthAgg = new Map<string, { date: Date; input: number; output: number }>();
 			for (const d of dailyParsed) {
 				const key = monthKey(d.date);

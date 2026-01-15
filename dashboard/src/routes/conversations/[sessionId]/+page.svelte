@@ -1,6 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { getConversation } from '$lib/remote/conversations.remote';
 
 	type ToolCall = {
@@ -50,7 +49,7 @@
 		total_tokens_output: number;
 	};
 
-	let sessionId = $derived($page.params.sessionId ?? '');
+	let sessionId = $derived(page.params.sessionId ?? '');
 
 	let data = $state<{ session: Conversation | null; turns: Turn[] } | null>(null);
 	let error = $state<string | null>(null);
@@ -67,12 +66,17 @@
 		return ms.toFixed(0) + 'ms';
 	}
 
-	onMount(async () => {
-		try {
-			data = await getConversation({ sessionId });
-		} catch (e) {
-			error = e instanceof Error ? e.message : 'Failed to load';
-		}
+	$effect(() => {
+		const id = sessionId;
+		if (!id) return;
+
+		getConversation({ sessionId: id })
+			.then((result) => {
+				data = result;
+			})
+			.catch((e) => {
+				error = e instanceof Error ? e.message : 'Failed to load';
+			});
 	});
 </script>
 
@@ -137,7 +141,7 @@
 				{#if data.turns.length === 0}
 					<div class="text-tertiary text-sm py-8 text-center">No turns captured yet</div>
 				{:else}
-					{#each data.turns as t}
+					{#each data.turns as t (t.id)}
 						<div class="panel" style="margin: 1rem 0; padding: 1rem;">
 							<div class="text-tertiary text-sm" style="margin-bottom: 0.75rem;">
 								<span class="font-mono">turn #{t.id}</span>
@@ -179,7 +183,7 @@
 								<div class="text-tertiary text-sm">-</div>
 							{:else}
 								<ul style="list-style: none; padding: 0; margin: 0;">
-									{#each t.tool_calls as c}
+									{#each t.tool_calls as c (c.id)}
 										<li
 											style="border: 1px solid var(--color-grid-line); background: var(--color-bg-elevated); padding: 0.5rem 0.75rem; margin-bottom: 0.5rem;"
 										>

@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import { getConversations } from '$lib/remote/conversations.remote';
 
 	type Conversation = {
@@ -30,12 +29,14 @@
 				});
 	}
 
-	onMount(async () => {
-		try {
-			conversations = await getConversations();
-		} catch (e) {
-			error = e instanceof Error ? e.message : 'Failed to load';
-		}
+	$effect(() => {
+		getConversations()
+			.then((result) => {
+				conversations = result;
+			})
+			.catch((e) => {
+				error = e instanceof Error ? e.message : 'Failed to load';
+			});
 	});
 </script>
 
@@ -72,7 +73,7 @@
 						</tr>
 					</thead>
 					<tbody>
-						{#each conversations as c}
+						{#each conversations as c (c.session_id)}
 							<tr>
 								<td class="text-tertiary text-sm">{fmt(c.last_request_at)}</td>
 								<td>

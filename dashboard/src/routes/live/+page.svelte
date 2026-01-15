@@ -1,6 +1,4 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-
 	type LiveEvent = {
 		type: string;
 		createdAt?: string;
@@ -83,11 +81,13 @@
 	}
 
 	function getEventMeta(e: LiveEvent): { label: string; icon: string; color: string } {
-		return EVENT_TYPES[e.type as keyof typeof EVENT_TYPES] || {
-			label: e.type,
-			icon: '?',
-			color: 'var(--color-text-tertiary)'
-		};
+		return (
+			EVENT_TYPES[e.type as keyof typeof EVENT_TYPES] || {
+				label: e.type,
+				icon: '?',
+				color: 'var(--color-text-tertiary)'
+			}
+		);
 	}
 
 	function getFilename(path: string | undefined): string {
@@ -108,7 +108,7 @@
 		autoScroll = scrollTop < 100;
 	}
 
-	onMount(() => {
+	$effect(() => {
 		const es = new EventSource('/api/live');
 		es.onopen = () => {
 			status = 'open';
@@ -121,7 +121,6 @@
 				const parsed = JSON.parse(m.data) as LiveEvent;
 				feed = [parsed, ...feed].slice(0, 500);
 
-				// Track project directories from request events
 				if (parsed.type === 'request' && parsed.sessionId) {
 					const workingDir = (parsed as any).workingDir;
 					if (workingDir && typeof workingDir === 'string') {
@@ -130,7 +129,6 @@
 					}
 				}
 
-				// Scroll to top if auto-scroll is enabled
 				if (autoScroll && feedContainer) {
 					feedContainer.scrollTop = 0;
 				}
@@ -168,7 +166,7 @@
 		<button class="filter-btn" class:active={filter === 'all'} onclick={() => (filter = 'all')}>
 			All
 		</button>
-		{#each Object.entries(EVENT_TYPES) as [type, meta]}
+		{#each Object.entries(EVENT_TYPES) as [type, meta] (type)}
 			<button
 				class="filter-btn"
 				class:active={filter === type}
@@ -209,7 +207,11 @@
 								<span class="event-project">{getProjectName(event.sessionId)}</span>
 							{/if}
 							{#if event.type === 'tool.after' && event.success !== undefined}
-								<span class="event-status" class:success={event.success} class:failure={!event.success}>
+								<span
+									class="event-status"
+									class:success={event.success}
+									class:failure={!event.success}
+								>
 									{event.success ? 'OK' : 'FAIL'}
 								</span>
 							{/if}
@@ -234,7 +236,12 @@
 								</div>
 							{:else if event.type === 'file.edit'}
 								<div class="file-info">
-									<span class="file-op" class:read={event.operation === 'read'} class:write={event.operation === 'write'} class:edit={event.operation === 'edit'}>
+									<span
+										class="file-op"
+										class:read={event.operation === 'read'}
+										class:write={event.operation === 'write'}
+										class:edit={event.operation === 'edit'}
+									>
 										{event.operation}
 									</span>
 									<span class="file-path">{getFilename(event.filePath)}</span>
@@ -243,8 +250,11 @@
 									{/if}
 									{#if event.operation !== 'read' && (event.linesAdded || event.linesRemoved)}
 										<span class="file-changes">
-											{#if event.linesAdded}<span class="lines-added">+{event.linesAdded}</span>{/if}
-											{#if event.linesRemoved}<span class="lines-removed">-{event.linesRemoved}</span>{/if}
+											{#if event.linesAdded}<span class="lines-added">+{event.linesAdded}</span
+												>{/if}
+											{#if event.linesRemoved}<span class="lines-removed"
+													>-{event.linesRemoved}</span
+												>{/if}
 										</span>
 									{/if}
 								</div>
@@ -256,7 +266,8 @@
 									{/if}
 									{#if event.tokens}
 										<span class="token-info">
-											{event.tokens.input.toLocaleString()} in / {event.tokens.output.toLocaleString()} out
+											{event.tokens.input.toLocaleString()} in / {event.tokens.output.toLocaleString()}
+											out
 										</span>
 									{/if}
 									{#if event.cost}
@@ -264,7 +275,9 @@
 									{/if}
 								</div>
 							{:else if event.type === 'assistant.text'}
-								<div class="assistant-content">{event.text?.slice(0, 300)}{(event.text?.length ?? 0) > 300 ? '...' : ''}</div>
+								<div class="assistant-content">
+									{event.text?.slice(0, 300)}{(event.text?.length ?? 0) > 300 ? '...' : ''}
+								</div>
 							{:else}
 								<div class="generic-content">{JSON.stringify(event).slice(0, 200)}</div>
 							{/if}
@@ -311,8 +324,13 @@
 	}
 
 	@keyframes pulse-dot {
-		0%, 100% { opacity: 1; }
-		50% { opacity: 0.5; }
+		0%,
+		100% {
+			opacity: 1;
+		}
+		50% {
+			opacity: 0.5;
+		}
 	}
 
 	.status-text {

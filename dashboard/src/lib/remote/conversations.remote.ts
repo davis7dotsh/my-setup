@@ -1,5 +1,6 @@
 import { query } from '$app/server';
 import { db } from '$lib/server/db';
+import { resolveCostUsd } from '$lib/server/model-pricing';
 import { sessions, turns, toolCalls } from '$lib/db/schema';
 import { desc, eq, inArray } from 'drizzle-orm';
 
@@ -123,8 +124,29 @@ export const getConversation = query('unchecked', async ({ sessionId }: { sessio
 		callsByTurn.set(call.turn_id, list);
 	}
 
+	const resolvedTurnCostTotal = turnRows.reduce((sum, t) => {
+		const costUsd = Number(t.cost_usd ?? 0);
+		const resolvedCost = resolveCostUsd({
+			costUsd,
+			providerId: t.provider_id,
+			modelId: t.model_id,
+			tokensInput: Number(t.tokens_input ?? 0),
+			tokensOutput: Number(t.tokens_output ?? 0),
+			tokensReasoning: Number(t.tokens_reasoning ?? 0),
+			tokensCacheRead: Number(t.tokens_cache_read ?? 0),
+			tokensCacheWrite: Number(t.tokens_cache_write ?? 0)
+		});
+		return sum + resolvedCost;
+	}, 0);
+
 	return {
-		session,
+		session: session
+			? {
+					...session,
+					total_cost_usd:
+						session.total_cost_usd > 0 ? session.total_cost_usd : resolvedTurnCostTotal
+				}
+			: null,
 		turns: turnRows.map((t) => ({
 			id: t.id,
 			session_id: t.session_id,
@@ -140,7 +162,16 @@ export const getConversation = query('unchecked', async ({ sessionId }: { sessio
 			tokens_reasoning: Number(t.tokens_reasoning ?? 0),
 			tokens_cache_read: Number(t.tokens_cache_read ?? 0),
 			tokens_cache_write: Number(t.tokens_cache_write ?? 0),
-			cost_usd: Number(t.cost_usd ?? 0),
+			cost_usd: resolveCostUsd({
+				costUsd: Number(t.cost_usd ?? 0),
+				providerId: t.provider_id,
+				modelId: t.model_id,
+				tokensInput: Number(t.tokens_input ?? 0),
+				tokensOutput: Number(t.tokens_output ?? 0),
+				tokensReasoning: Number(t.tokens_reasoning ?? 0),
+				tokensCacheRead: Number(t.tokens_cache_read ?? 0),
+				tokensCacheWrite: Number(t.tokens_cache_write ?? 0)
+			}),
 			duration_ms: t.duration_ms ?? null,
 			finish_reason: t.finish_reason ?? null,
 			created_at: toIso(t.created_at),
@@ -173,6 +204,9 @@ export const getRecentTurns = query(async () => {
 			model_id: turns.modelId,
 			tokens_input: turns.tokensInput,
 			tokens_output: turns.tokensOutput,
+			tokens_reasoning: turns.tokensReasoning,
+			tokens_cache_read: turns.tokensCacheRead,
+			tokens_cache_write: turns.tokensCacheWrite,
 			cost_usd: turns.costUsd,
 			created_at: turns.createdAt,
 			completed_at: turns.completedAt
@@ -191,7 +225,16 @@ export const getRecentTurns = query(async () => {
 		model_id: t.model_id ?? null,
 		tokens_input: Number(t.tokens_input ?? 0),
 		tokens_output: Number(t.tokens_output ?? 0),
-		cost_usd: Number(t.cost_usd ?? 0),
+		cost_usd: resolveCostUsd({
+			costUsd: Number(t.cost_usd ?? 0),
+			providerId: t.provider_id,
+			modelId: t.model_id,
+			tokensInput: Number(t.tokens_input ?? 0),
+			tokensOutput: Number(t.tokens_output ?? 0),
+			tokensReasoning: Number(t.tokens_reasoning ?? 0),
+			tokensCacheRead: Number(t.tokens_cache_read ?? 0),
+			tokensCacheWrite: Number(t.tokens_cache_write ?? 0)
+		}),
 		created_at: toIso(t.created_at),
 		completed_at: toIso(t.completed_at)
 	}));

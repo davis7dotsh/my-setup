@@ -1,32 +1,66 @@
 import { query } from '$app/server';
 import { db } from '$lib/server/db';
+import { resolveCostUsd } from '$lib/server/model-pricing';
 import { requests, dailySummary, toolCalls, fileEdits } from '$lib/db/schema';
 import { desc, sql, sum, count, avg, eq, isNotNull } from 'drizzle-orm';
 import * as v from 'valibot';
 
 // Totals query - aggregate stats
 export const getTotals = query(async () => {
-	const totalsResult = await db
+	const rows = await db
 		.select({
-			total_requests: count(),
-			total_input: sum(requests.tokensInput),
-			total_output: sum(requests.tokensOutput),
-			total_reasoning: sum(requests.tokensReasoning),
-			total_cache_read: sum(requests.tokensCacheRead),
-			total_cache_write: sum(requests.tokensCacheWrite),
-			total_cost: sum(requests.costUsd)
+			request_count: dailySummary.requestCount,
+			tokens_input: dailySummary.tokensInput,
+			tokens_output: dailySummary.tokensOutput,
+			tokens_reasoning: dailySummary.tokensReasoning,
+			tokens_cache_read: dailySummary.tokensCacheRead,
+			tokens_cache_write: dailySummary.tokensCacheWrite,
+			cost_usd: dailySummary.costUsd,
+			provider_id: dailySummary.providerId,
+			model_id: dailySummary.modelId
 		})
-		.from(requests);
+		.from(dailySummary);
 
-	return {
-		total_requests: Number(totalsResult[0]?.total_requests ?? 0),
-		total_input: Number(totalsResult[0]?.total_input ?? 0),
-		total_output: Number(totalsResult[0]?.total_output ?? 0),
-		total_reasoning: Number(totalsResult[0]?.total_reasoning ?? 0),
-		total_cache_read: Number(totalsResult[0]?.total_cache_read ?? 0),
-		total_cache_write: Number(totalsResult[0]?.total_cache_write ?? 0),
-		total_cost: Number(totalsResult[0]?.total_cost ?? 0)
-	};
+	const totals = rows.reduce(
+		(acc, row) => {
+			const tokensInput = Number(row.tokens_input ?? 0);
+			const tokensOutput = Number(row.tokens_output ?? 0);
+			const tokensReasoning = Number(row.tokens_reasoning ?? 0);
+			const tokensCacheRead = Number(row.tokens_cache_read ?? 0);
+			const tokensCacheWrite = Number(row.tokens_cache_write ?? 0);
+			const costUsd = Number(row.cost_usd ?? 0);
+			const resolvedCost = resolveCostUsd({
+				costUsd,
+				providerId: row.provider_id,
+				modelId: row.model_id,
+				tokensInput,
+				tokensOutput,
+				tokensReasoning,
+				tokensCacheRead,
+				tokensCacheWrite
+			});
+			return {
+				total_requests: acc.total_requests + Number(row.request_count ?? 0),
+				total_input: acc.total_input + tokensInput,
+				total_output: acc.total_output + tokensOutput,
+				total_reasoning: acc.total_reasoning + tokensReasoning,
+				total_cache_read: acc.total_cache_read + tokensCacheRead,
+				total_cache_write: acc.total_cache_write + tokensCacheWrite,
+				total_cost: acc.total_cost + resolvedCost
+			};
+		},
+		{
+			total_requests: 0,
+			total_input: 0,
+			total_output: 0,
+			total_reasoning: 0,
+			total_cache_read: 0,
+			total_cache_write: 0,
+			total_cost: 0
+		}
+	);
+
+	return totals;
 });
 
 // Cost by model query
@@ -38,6 +72,9 @@ export const getCostByModel = query(async () => {
 			request_count: count(),
 			tokens_input: sum(requests.tokensInput),
 			tokens_output: sum(requests.tokensOutput),
+			tokens_reasoning: sum(requests.tokensReasoning),
+			tokens_cache_read: sum(requests.tokensCacheRead),
+			tokens_cache_write: sum(requests.tokensCacheWrite),
 			cost_usd: sum(requests.costUsd)
 		})
 		.from(requests)
@@ -50,32 +87,72 @@ export const getCostByModel = query(async () => {
 		request_count: Number(r.request_count),
 		tokens_input: Number(r.tokens_input ?? 0),
 		tokens_output: Number(r.tokens_output ?? 0),
-		cost_usd: Number(r.cost_usd ?? 0)
+		cost_usd: resolveCostUsd({
+			costUsd: Number(r.cost_usd ?? 0),
+			providerId: r.provider_id,
+			modelId: r.model_id,
+			tokensInput: Number(r.tokens_input ?? 0),
+			tokensOutput: Number(r.tokens_output ?? 0),
+			tokensReasoning: Number(r.tokens_reasoning ?? 0),
+			tokensCacheRead: Number(r.tokens_cache_read ?? 0),
+			tokensCacheWrite: Number(r.tokens_cache_write ?? 0)
+		})
 	}));
 });
 
 // Cost over time (last 30 days)
 export const getCostOverTime = query(async () => {
-	const result = await db
+	const rows = await db
 		.select({
 			date: dailySummary.date,
-			request_count: sum(dailySummary.requestCount),
-			tokens_input: sum(dailySummary.tokensInput),
-			tokens_output: sum(dailySummary.tokensOutput),
-			cost_usd: sum(dailySummary.costUsd)
+			provider_id: dailySummary.providerId,
+			model_id: dailySummary.modelId,
+			request_count: dailySummary.requestCount,
+			tokens_input: dailySummary.tokensInput,
+			tokens_output: dailySummary.tokensOutput,
+			tokens_reasoning: dailySummary.tokensReasoning,
+			tokens_cache_read: dailySummary.tokensCacheRead,
+			tokens_cache_write: dailySummary.tokensCacheWrite,
+			cost_usd: dailySummary.costUsd
 		})
 		.from(dailySummary)
 		.where(sql`${dailySummary.date}::date >= CURRENT_DATE - INTERVAL '30 days'`)
-		.groupBy(dailySummary.date)
 		.orderBy(dailySummary.date);
 
-	return result.map((r) => ({
-		date: r.date,
-		request_count: Number(r.request_count ?? 0),
-		tokens_input: Number(r.tokens_input ?? 0),
-		tokens_output: Number(r.tokens_output ?? 0),
-		cost_usd: Number(r.cost_usd ?? 0)
-	}));
+	const byDate = rows.reduce((map, row) => {
+		const date = row.date;
+		const tokensInput = Number(row.tokens_input ?? 0);
+		const tokensOutput = Number(row.tokens_output ?? 0);
+		const tokensReasoning = Number(row.tokens_reasoning ?? 0);
+		const tokensCacheRead = Number(row.tokens_cache_read ?? 0);
+		const tokensCacheWrite = Number(row.tokens_cache_write ?? 0);
+		const costUsd = Number(row.cost_usd ?? 0);
+		const resolvedCost = resolveCostUsd({
+			costUsd,
+			providerId: row.provider_id,
+			modelId: row.model_id,
+			tokensInput,
+			tokensOutput,
+			tokensReasoning,
+			tokensCacheRead,
+			tokensCacheWrite
+		});
+		const existing = map.get(date) ?? {
+			date,
+			request_count: 0,
+			tokens_input: 0,
+			tokens_output: 0,
+			cost_usd: 0
+		};
+		existing.request_count += Number(row.request_count ?? 0);
+		existing.tokens_input += tokensInput;
+		existing.tokens_output += tokensOutput;
+		existing.cost_usd += resolvedCost;
+		map.set(date, existing);
+		return map;
+	}, new Map<string, { date: string; request_count: number; tokens_input: number; tokens_output: number; cost_usd: number }>());
+
+	return Array.from(byDate.values()).sort((a, b) => a.date.localeCompare(b.date));
 });
 
 // Tokens by hour today and tokens by day (for zoom chart)
@@ -126,25 +203,54 @@ export const getTokensData = query(v.number(), async (tzOffsetMinutes: number) =
 
 // Agent breakdown
 export const getAgentBreakdown = query(async () => {
-	const result = await db
+	const rows = await db
 		.select({
 			agent: requests.agent,
-			request_count: count(),
-			tokens_input: sum(requests.tokensInput),
-			tokens_output: sum(requests.tokensOutput),
-			cost_usd: sum(requests.costUsd)
+			provider_id: requests.providerId,
+			model_id: requests.modelId,
+			tokens_input: requests.tokensInput,
+			tokens_output: requests.tokensOutput,
+			tokens_reasoning: requests.tokensReasoning,
+			tokens_cache_read: requests.tokensCacheRead,
+			tokens_cache_write: requests.tokensCacheWrite,
+			cost_usd: requests.costUsd
 		})
-		.from(requests)
-		.groupBy(requests.agent)
-		.orderBy(desc(sum(requests.costUsd)));
+		.from(requests);
 
-	return result.map((r) => ({
-		agent: r.agent,
-		request_count: Number(r.request_count),
-		tokens_input: Number(r.tokens_input ?? 0),
-		tokens_output: Number(r.tokens_output ?? 0),
-		cost_usd: Number(r.cost_usd ?? 0)
-	}));
+	const totals = rows.reduce((map, row) => {
+		const agent = row.agent ?? 'unknown';
+		const tokensInput = Number(row.tokens_input ?? 0);
+		const tokensOutput = Number(row.tokens_output ?? 0);
+		const tokensReasoning = Number(row.tokens_reasoning ?? 0);
+		const tokensCacheRead = Number(row.tokens_cache_read ?? 0);
+		const tokensCacheWrite = Number(row.tokens_cache_write ?? 0);
+		const costUsd = Number(row.cost_usd ?? 0);
+		const resolvedCost = resolveCostUsd({
+			costUsd,
+			providerId: row.provider_id,
+			modelId: row.model_id,
+			tokensInput,
+			tokensOutput,
+			tokensReasoning,
+			tokensCacheRead,
+			tokensCacheWrite
+		});
+		const existing = map.get(agent) ?? {
+			agent,
+			request_count: 0,
+			tokens_input: 0,
+			tokens_output: 0,
+			cost_usd: 0
+		};
+		existing.request_count += 1;
+		existing.tokens_input += tokensInput;
+		existing.tokens_output += tokensOutput;
+		existing.cost_usd += resolvedCost;
+		map.set(agent, existing);
+		return map;
+	}, new Map<string, { agent: string; request_count: number; tokens_input: number; tokens_output: number; cost_usd: number }>());
+
+	return Array.from(totals.values()).sort((a, b) => b.cost_usd - a.cost_usd);
 });
 
 // Model performance (avg duration)
@@ -173,6 +279,7 @@ export const getRecentRequests = query(async () => {
 		.select({
 			id: requests.id,
 			model_id: requests.modelId,
+			provider_id: requests.providerId,
 			tokens_input: requests.tokensInput,
 			tokens_output: requests.tokensOutput,
 			tokens_cache_read: requests.tokensCacheRead,
@@ -191,7 +298,15 @@ export const getRecentRequests = query(async () => {
 		tokens_output: Number(r.tokens_output ?? 0),
 		tokens_cache_read: Number(r.tokens_cache_read ?? 0),
 		tokens_cache_write: Number(r.tokens_cache_write ?? 0),
-		cost_usd: Number(r.cost_usd ?? 0),
+		cost_usd: resolveCostUsd({
+			costUsd: Number(r.cost_usd ?? 0),
+			providerId: r.provider_id,
+			modelId: r.model_id,
+			tokensInput: Number(r.tokens_input ?? 0),
+			tokensOutput: Number(r.tokens_output ?? 0),
+			tokensCacheRead: Number(r.tokens_cache_read ?? 0),
+			tokensCacheWrite: Number(r.tokens_cache_write ?? 0)
+		}),
 		created_at: r.created_at?.toISOString() ?? new Date().toISOString()
 	}));
 });
@@ -218,9 +333,7 @@ export const getToolStats = query(async () => {
 		success_count: Number(r.success_count ?? 0),
 		failure_count: Number(r.failure_count ?? 0),
 		success_rate:
-			Number(r.call_count) > 0
-				? Number(r.success_count ?? 0) / Number(r.call_count)
-				: 0,
+			Number(r.call_count) > 0 ? Number(r.success_count ?? 0) / Number(r.call_count) : 0,
 		avg_duration_ms: Number(r.avg_duration_ms ?? 0),
 		total_duration_ms: Number(r.total_duration_ms ?? 0)
 	}));
