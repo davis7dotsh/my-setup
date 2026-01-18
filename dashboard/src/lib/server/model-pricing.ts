@@ -81,7 +81,6 @@ export const resolveCostUsd = ({
 	tokensCacheRead?: number;
 	tokensCacheWrite?: number;
 }) => {
-	if (costUsd > 0) return costUsd;
 	const computed = computeCostUsd({
 		providerId,
 		modelId,
